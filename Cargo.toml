@@ -1,0 +1,22 @@
+[package]
+name = "github-issues"
+version = "0.1.0"
+authors = ["Arnau Siches <arnau@ustwo.com>"]
+
+[lib]
+name = "issues"
+path = "src/lib.rs"
+
+[dependencies]
+curl = "0.2"
+docopt = "0.6"
+rustc-serialize = "0.3"
+log = "0.3"
+
+[[bin]]
+name = "github-issues"
+test = false
+doc = false
+
+[[test]]
+name = "lib"
