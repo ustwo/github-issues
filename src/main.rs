@@ -26,7 +26,7 @@ const USAGE: &'static str = "
 Github issue consumer.
 
 Usage:
-    github-issues <command> <repopath> [--label=<label>...]
+    github-issues <command> <repopath> --oauth-token=<oauth_token> [--label=<label>...]
 
 Options:
     -h, --help          Display this message
@@ -38,6 +38,7 @@ struct Args {
     arg_command: Option<Command>,
     arg_repopath: String,
     flag_label: Vec<String>,
+    flag_oauth_token: String,
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -65,13 +66,13 @@ fn main() {
             match cmd {
                 Command::Fetch => {
                     let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
-                    let flags = args.flag_label;
 
                     check_repopath!(repopath);
 
                     cmd::fetch::run(repopath[0],
                                     repopath[1],
-                                    flags);
+                                    args.flag_oauth_token,
+                                    args.flag_label);
                 }
             }
         }

@@ -3,13 +3,18 @@ use std::process;
 use curl::http;
 
 
-pub fn run(owner: &str, repo: &str, labels: Vec<String>) {
+pub fn run(owner: &str,
+           repo: &str,
+           oauth_token: String,
+           labels: Vec<String>) {
     let url = format!("https://api.github.com/repos/{}/{}/issues", owner, repo);
+    let auth_header = format!("token {}", oauth_token);
     // println!("{:?}, {:?}", owner, repo);
     // println!("{:?}", labels);
 
     let res = http::handle()
                    .get(url)
+                   .header("Authorization", &auth_header)
                    .header("User-Agent", "Github-Issues-CLI")
                    .header("Accept", "application/vnd.github.v3+json")
                    .exec()
