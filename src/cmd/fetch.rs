@@ -6,26 +6,6 @@ use std::process;
 use curl::http;
 use rustc_serialize::json;
 
-// fn get_page(url: String, token: String) -> Result<Vec<Issue>, json::DecoderError> {
-//     let auth_header = format!("token {}", token);
-//     let res = http::handle()
-//                    .get(url)
-//                    .header("Authorization", &auth_header)
-//                    .header("User-Agent", "Github-Issues-CLI")
-//                    .header("Accept", "application/vnd.github.v3+json")
-//                    .exec()
-//                    .unwrap_or_else(|e| process::exit(1));
-
-//     let body = match str::from_utf8(res.get_body()) {
-//         Ok(b) => b,
-//         Err(..) => "Unable to parse"
-//     };
-
-//     // let issues_result: Result<Vec<Issue>,_> = json::decode(body);
-//     // issues_result
-//     json::decode(body)
-// }
-
 fn get_page(url: String, token: &str) -> http::Response {
     let auth_header = format!("token {}", token);
     let res = http::handle()
@@ -47,6 +27,16 @@ fn next_url(link: String) -> Option<String> {
     }
 }
 
+fn to_issues(raw: &[u8]) -> Result<Vec<Issue>, json::DecoderError> {
+    match str::from_utf8(raw) {
+        Ok(b) => json::decode(b),
+        Err(..) => {
+            println!("Unable to parse the response from Github");
+            process::exit(1)
+        }
+    }
+}
+
 pub fn run(owner: &str,
            repo: &str,
            oauth_token: String,
@@ -54,32 +44,24 @@ pub fn run(owner: &str,
            output_file: String) {
 
     let page = 1;
-    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}",
-                      owner, repo, page);
+    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}&labels={}",
+                      owner, repo, page, labels.join(","));
     println!("Fetching {:?}", url);
     let res = get_page(url, &oauth_token);
-    let body = match str::from_utf8(res.get_body()) {
-        Ok(b) => b,
-        Err(..) => "Unable to parse"
-    };
-    let issues_result: Result<Vec<Issue>,_> = json::decode(body);
-    let mut issues = issues_result.unwrap();
-    // println!("{:?}", issues);
+    let mut issues = to_issues(res.get_body()).unwrap();
 
     match res.get_headers().get("link") {
         Some(links) => {
-            let mut nurl = next_url(links[0].clone());
-            println!("Fetching {:?}", nurl);
+            let mut nurl = next_url(links.first().unwrap().clone());
+
             while let Some(nu) = nurl {
-                println!("{:?}", nu);
+                println!("Fetching {:?}", nu);
                 let r = get_page(nu.to_string(), &oauth_token);
-                let b = match str::from_utf8(r.get_body()) {
-                    Ok(b) => b,
-                    Err(..) => "Unable to parse"
-                };
-                let iss_result: Result<Vec<Issue>,_> = json::decode(b);
-                issues.extend(iss_result.unwrap());
-                let link = r.get_headers().get("link").unwrap()[0].clone();
+                issues.extend(to_issues(r.get_body()).unwrap());
+
+                let link = r.get_headers().get("link").unwrap()
+                                          .first().unwrap()
+                                          .clone();
                 nurl = next_url(link);
             }
         }
