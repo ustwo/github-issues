@@ -1,4 +1,5 @@
 use csv;
+use std::result;
 use std::str;
 use std::process;
 use curl::http;
@@ -11,7 +12,9 @@ pub fn run(owner: &str,
            labels: Vec<String>) {
     let url = format!("https://api.github.com/repos/{}/{}/issues", owner, repo);
     let auth_header = format!("token {}", oauth_token);
+
     // println!("{:?}, {:?}", owner, repo);
+    // println!("{:?}", url);
     // println!("{:?}", labels);
 
     let res = http::handle()
@@ -27,20 +30,26 @@ pub fn run(owner: &str,
         Err(..) => "Unable to parse"
     };
 
-    // let issues: json::Json = body.parse().unwrap();
-    let issues: Vec<Issue> = json::decode(body).unwrap();
 
-    println!("code={}; headers={:?}",
-             res.get_code(),
-             res.get_headers());
+    let issues_result: result::Result<Vec<Issue>,_> = json::decode(body);
+    let issues = issues_result.unwrap();
+    // println!("{:?}", issues);
 
-    let mut wtr = csv::Writer::from_memory();
+    println!("{:?}", res.get_headers().get("Link"));
+    // println!("code={}; headers={:?}",
+    //          res.get_code(),
+    //          res.get_headers());
+
+    // let mut wtr = csv::Writer::from_memory();
+    let mut wtr = csv::Writer::from_file("foo.csv").unwrap();
     let headers = ("number",
-                   "created_at",
                    "title",
-                   "body",
+                   "state",
+                   "created_at",
+                   "closed_at",
+                   "user",
                    "labels",
-                   "user");
+                   "body");
     wtr.encode(headers);
 
     for issue in issues {
@@ -50,30 +59,36 @@ pub fn run(owner: &str,
                                  .join(",");
 
         let row = (issue.number,
-                   issue.created_at,
                    issue.title,
-                   issue.body,
+                   issue.state,
+                   issue.created_at,
+                   issue.closed_at,
+                   issue.user.login,
                    labels,
-                   issue.user.login);
+                   issue.body);
 
         // println!("{:?}", row);
-        let result = wtr.encode(row);
-
-        println!("{:?}", result.is_ok());
+        // let result = wtr.encode(row);
+        // println!("{:?}", result.is_ok());
+        wtr.encode(row);
     }
 
-    println!("{:?}", wtr.as_string());
+    // println!("{:?}", wtr.as_string());
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct Issue {
-    body: String,
-    created_at: String,
+    body: Option<String>,
+    created_at: Option<String>,
+    closed_at: Option<String>,
     labels: Vec<Label>,
     number: u32,
-    title: String,
+    state: Option<String>,
+    title: Option<String>,
     user: User,
 }
+
+type Labels = Vec<Label>;
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct Label {

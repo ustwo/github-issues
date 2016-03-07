@@ -27,7 +27,7 @@ const USAGE: &'static str = "
 Github issue consumer.
 
 Usage:
-    github-issues <command> <repopath> --oauth-token=<oauth_token> [--label=<label>...]
+    github-issues <command> <repopath> --oauth-token=<oauth_token> --csv [--label=<label>...]
 
 Options:
     -h, --help          Display this message
@@ -40,6 +40,7 @@ struct Args {
     arg_repopath: String,
     flag_label: Vec<String>,
     flag_oauth_token: String,
+    flag_csv: bool,
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -78,6 +79,4 @@ fn main() {
             }
         }
     }
-
-
 }
