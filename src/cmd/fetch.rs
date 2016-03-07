@@ -1,4 +1,5 @@
 use csv;
+use regex::Regex;
 use std::result::Result;
 use std::str;
 use std::process;
@@ -25,14 +26,7 @@ use rustc_serialize::json;
 //     json::decode(body)
 // }
 
-fn get_page(owner: &str,
-            repo: &str,
-            page: u16,
-            labels: Vec<String>,
-            token: String) -> http::Response {
-
-    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}",
-                      owner, repo, page);
+fn get_page(url: String, token: &str) -> http::Response {
     let auth_header = format!("token {}", token);
     let res = http::handle()
                    .get(url)
@@ -45,6 +39,13 @@ fn get_page(owner: &str,
     res
 }
 
+fn next_url(link: String) -> Option<String> {
+    let re = Regex::new(r"<([^;]+)>;\s*rel=.next.").unwrap();
+    match re.captures(&link) {
+        None => None,
+        Some(cs) => Some(cs.at(1).unwrap().to_string())
+    }
+}
 
 pub fn run(owner: &str,
            repo: &str,
@@ -52,23 +53,44 @@ pub fn run(owner: &str,
            labels: Vec<String>) {
 
     let page = 1;
-    let res = get_page(owner, repo, page, labels, oauth_token);
+    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}",
+                      owner, repo, page);
+    let res = get_page(url, &oauth_token);
     let body = match str::from_utf8(res.get_body()) {
         Ok(b) => b,
         Err(..) => "Unable to parse"
     };
 
+    match res.get_headers().get("link") {
+        Some(links) => {
+            let mut nurl = next_url(links[0].clone());
+            println!("{:?}", nurl);
+            while let Some(nu) = nurl {
+                println!("{:?}", nu);
+                let r = get_page(nu.to_string(), &oauth_token);
+                let b = match str::from_utf8(r.get_body()) {
+                    Ok(b) => b,
+                    Err(..) => "Unable to parse"
+                };
+                let link = r.get_headers().get("link").unwrap()[0].clone();
+                nurl = next_url(link);
+            }
+        }
+        _ => {}
+    }
+
+    // for (k, v) in res.get_headers() {
+    //     println!("{:?}: {:?}", k, v);
+    // }
+
+    // println!("code={}; headers={:?}",
+    //          res.get_code(),
+    //          res.get_headers());
+
     let issues_result: Result<Vec<Issue>,_> = json::decode(body);
     let issues = issues_result.unwrap();
     // println!("{:?}", issues);
 
-    println!("{:?}", res.get_headers().get("link"));
-    for (k, v) in res.get_headers() {
-        println!("{:?}: {:?}", k, v);
-    }
-    // println!("code={}; headers={:?}",
-    //          res.get_code(),
-    //          res.get_headers());
 
     // let mut wtr = csv::Writer::from_memory();
     let mut wtr = csv::Writer::from_file("foo.csv").unwrap();

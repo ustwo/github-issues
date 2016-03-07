@@ -1,4 +1,5 @@
 extern crate csv;
+extern crate regex;
 extern crate curl;
 extern crate docopt;
 extern crate rustc_serialize;
