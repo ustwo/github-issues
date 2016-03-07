@@ -28,7 +28,7 @@ const USAGE: &'static str = "
 Github issue consumer.
 
 Usage:
-    github-issues <command> <repopath> --oauth-token=<oauth_token> --csv [--label=<label>...]
+    github-issues <command> <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
 
 Options:
     -h, --help          Display this message
@@ -42,6 +42,7 @@ struct Args {
     flag_label: Vec<String>,
     flag_oauth_token: String,
     flag_csv: bool,
+    flag_output: String,
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -75,7 +76,8 @@ fn main() {
                     cmd::fetch::run(repopath[0],
                                     repopath[1],
                                     args.flag_oauth_token,
-                                    args.flag_label);
+                                    args.flag_label,
+                                    args.flag_output);
                 }
             }
         }

@@ -50,7 +50,8 @@ fn next_url(link: String) -> Option<String> {
 pub fn run(owner: &str,
            repo: &str,
            oauth_token: String,
-           labels: Vec<String>) {
+           labels: Vec<String>,
+           output_file: String) {
 
     let page = 1;
     let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}",
@@ -87,7 +88,7 @@ pub fn run(owner: &str,
 
 
     // let mut wtr = csv::Writer::from_memory();
-    let mut wtr = csv::Writer::from_file("foo.csv").unwrap();
+    let mut wtr = csv::Writer::from_file(output_file).unwrap();
     let headers = ("number",
                    "title",
                    "state",
