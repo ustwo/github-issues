@@ -1,22 +1,39 @@
 use csv;
-use std::result;
+use std::result::Result;
 use std::str;
 use std::process;
 use curl::http;
 use rustc_serialize::json;
 
+// fn get_page(url: String, token: String) -> Result<Vec<Issue>, json::DecoderError> {
+//     let auth_header = format!("token {}", token);
+//     let res = http::handle()
+//                    .get(url)
+//                    .header("Authorization", &auth_header)
+//                    .header("User-Agent", "Github-Issues-CLI")
+//                    .header("Accept", "application/vnd.github.v3+json")
+//                    .exec()
+//                    .unwrap_or_else(|e| process::exit(1));
 
-pub fn run(owner: &str,
-           repo: &str,
-           oauth_token: String,
-           labels: Vec<String>) {
-    let url = format!("https://api.github.com/repos/{}/{}/issues", owner, repo);
-    let auth_header = format!("token {}", oauth_token);
+//     let body = match str::from_utf8(res.get_body()) {
+//         Ok(b) => b,
+//         Err(..) => "Unable to parse"
+//     };
 
-    // println!("{:?}, {:?}", owner, repo);
-    // println!("{:?}", url);
-    // println!("{:?}", labels);
+//     // let issues_result: Result<Vec<Issue>,_> = json::decode(body);
+//     // issues_result
+//     json::decode(body)
+// }
 
+fn get_page(owner: &str,
+            repo: &str,
+            page: u16,
+            labels: Vec<String>,
+            token: String) -> http::Response {
+
+    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}",
+                      owner, repo, page);
+    let auth_header = format!("token {}", token);
     let res = http::handle()
                    .get(url)
                    .header("Authorization", &auth_header)
@@ -25,17 +42,30 @@ pub fn run(owner: &str,
                    .exec()
                    .unwrap_or_else(|e| process::exit(1));
 
+    res
+}
+
+
+pub fn run(owner: &str,
+           repo: &str,
+           oauth_token: String,
+           labels: Vec<String>) {
+
+    let page = 1;
+    let res = get_page(owner, repo, page, labels, oauth_token);
     let body = match str::from_utf8(res.get_body()) {
         Ok(b) => b,
         Err(..) => "Unable to parse"
     };
 
-
-    let issues_result: result::Result<Vec<Issue>,_> = json::decode(body);
+    let issues_result: Result<Vec<Issue>,_> = json::decode(body);
     let issues = issues_result.unwrap();
     // println!("{:?}", issues);
 
-    println!("{:?}", res.get_headers().get("Link"));
+    println!("{:?}", res.get_headers().get("link"));
+    for (k, v) in res.get_headers() {
+        println!("{:?}: {:?}", k, v);
+    }
     // println!("code={}; headers={:?}",
     //          res.get_code(),
     //          res.get_headers());
@@ -51,6 +81,8 @@ pub fn run(owner: &str,
                    "labels",
                    "body");
     wtr.encode(headers);
+
+    println!("{:?}", issues.len());
 
     for issue in issues {
         let labels = issue.labels.iter()
