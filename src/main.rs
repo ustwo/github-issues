@@ -24,21 +24,23 @@ macro_rules! check_repopath {
     );
 }
 
+// github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
 const USAGE: &'static str = "
 Github issue consumer.
 
 Usage:
-    github-issues <command> <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
-    github-issues [options]
+    github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
+    github-issues version
+    github-issues (-h | --help)
 
 Options:
     -h, --help          Display this message
-    -V, --version       Print version info and exit
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
-    arg_command: Option<Command>,
+    cmd_version: bool,
+    cmd_fetch: bool,
     arg_repopath: String,
     flag_label: Vec<String>,
     flag_oauth_token: String,
@@ -46,10 +48,10 @@ struct Args {
     flag_output: String,
 }
 
-#[derive(Debug, RustcDecodable)]
-enum Command {
-    Fetch
-}
+// #[derive(Debug, RustcDecodable)]
+// enum Command {
+//     Fetch
+// }
 
 // impl Command {
 //     fn run(self) -> CliResult<()> {
@@ -70,30 +72,23 @@ pub fn version() -> String {
 
 fn main() {
     let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.options_first(true)
-                                           .version(Some(version()))
-                                           .decode())
+                            .and_then(|d| d.decode())
                             .unwrap_or_else(|e| e.exit());
 
-    match args.arg_command {
-        None => {
-            println!("Use --help for more info");
-            process::exit(0);
-        }
-        Some(cmd) => {
-            match cmd {
-                Command::Fetch => {
-                    let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
+    if args.cmd_version {
+        println!("github-issues version {}", version());
+        return;
+    }
 
-                    check_repopath!(repopath);
+    if args.cmd_fetch {
+        let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
 
-                    cmd::fetch::run(repopath[0],
-                                    repopath[1],
-                                    args.flag_oauth_token,
-                                    args.flag_label,
-                                    args.flag_output);
-                }
-            }
-        }
+        check_repopath!(repopath);
+
+        cmd::fetch::run(repopath[0],
+                        repopath[1],
+                        args.flag_oauth_token,
+                        args.flag_label,
+                        args.flag_output);
     }
 }
