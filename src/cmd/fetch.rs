@@ -7,6 +7,7 @@ use curl::http;
 use rustc_serialize::json;
 
 fn get_page(url: String, token: &str) -> http::Response {
+    println!("Fetching {:?}", url);
     let auth_header = format!("token {}", token);
     let res = http::handle()
                    .get(url)
@@ -15,6 +16,19 @@ fn get_page(url: String, token: &str) -> http::Response {
                    .header("Accept", "application/vnd.github.v3+json")
                    .exec()
                    .unwrap_or_else(|e| process::exit(1));
+
+    if res.get_code() != 200 {
+        match str::from_utf8(res.get_body()) {
+            Ok(b) => {
+                println!("{:?}", json::decode::<GithubError>(b).ok());
+                process::exit(1)
+            }
+            Err(..) => {
+                println!("Unable to parse the response from Github");
+                process::exit(1)
+            }
+        }
+    }
 
     res
 }
@@ -47,7 +61,6 @@ pub fn run(owner: &str,
     let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}&labels={}",
                       owner, repo, page, labels.join(","));
 
-    println!("Fetching {:?}", url);
     let res = get_page(url, &oauth_token);
     let mut issues = to_issues(res.get_body()).unwrap();
 
@@ -58,7 +71,6 @@ pub fn run(owner: &str,
             let mut nurl = next_url(links.first().unwrap().clone());
 
             while let Some(nu) = nurl {
-                println!("Fetching {:?}", nu);
                 let r = get_page(nu.to_string(), &oauth_token);
                 issues.extend(to_issues(r.get_body()).unwrap());
 
@@ -140,4 +152,10 @@ struct Label {
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct User {
     login: String,
+}
+
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+struct GithubError {
+    message: String,
+    documentation_url: String,
 }
