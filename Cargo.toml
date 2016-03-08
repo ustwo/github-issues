@@ -3,10 +3,6 @@ name = "github-issues"
 version = "0.1.1"
 authors = ["Arnau Siches <arnau@ustwo.com>"]
 
-[lib]
-name = "issues"
-path = "src/lib.rs"
-
 [dependencies]
 curl = "0.2"
 docopt = "0.6"
