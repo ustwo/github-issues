@@ -62,7 +62,7 @@ pub fn run(owner: &str,
     let page = 1;
     let labels_pair = if labels.is_empty() { "".to_string() }
                       else { format!("&labels={}", labels.join(",")) };
-    let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}{}",
+    let url = format!("https://api.github.com/repos/{}/{}/issues?filter=all&state=all&page={}{}",
                       owner, repo, page, labels_pair);
 
     let res = get_page(url, &oauth_token);
