@@ -8,9 +8,6 @@ extern crate ansi_term;
 #[macro_use]
 extern crate log;
 
-// use std::env;
-// use std::fmt;
-use std::process;
 use docopt::Docopt;
 
 mod say;
@@ -46,17 +43,6 @@ struct Args {
     flag_state: String,
 }
 
-// #[derive(Debug, RustcDecodable)]
-// enum Command {
-//     Fetch
-// }
-
-// impl Command {
-//     fn run(self) -> CliResult<()> {
-//         println!("foo");
-//     }
-// }
-
 pub fn version() -> String {
     let (maj, min, pat) = (option_env!("CARGO_PKG_VERSION_MAJOR"),
                            option_env!("CARGO_PKG_VERSION_MINOR"),
@@ -79,12 +65,6 @@ fn main() {
     }
 
     if args.cmd_fetch {
-        // let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
-
-        // check_repopath!(repopath);
-
-        // cmd::fetch::run(repopath[0],
-        //                 repopath[1],
         cmd::fetch::run(args.arg_repopath,
                         args.flag_oauth_token,
                         args.flag_label,

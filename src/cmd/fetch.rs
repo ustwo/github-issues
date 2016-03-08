@@ -84,7 +84,6 @@ pub fn run(repopath: String,
            output_file: String) {
 
     let (owner, repo) = parse_repopath(repopath);
-
     let labels_pair = if labels.is_empty() { "".to_string() }
                       else { format!("&labels={}", labels.join(",")) };
     let url = format!("https://api.github.com/repos/{}/{}/issues?filter=all&state={}{}",
@@ -118,8 +117,6 @@ pub fn run(repopath: String,
         _ => {}
     }
 
-
-    // let mut wtr = csv::Writer::from_memory();
     let mut wtr = csv::Writer::from_file(output_file).unwrap();
     let headers = ("number",
                    "title",
@@ -152,13 +149,8 @@ pub fn run(repopath: String,
                    labels,
                    issue.body);
 
-        // println!("{:?}", row);
-        // let result = wtr.encode(row);
-        // println!("{:?}", result.is_ok());
         wtr.encode(row);
     }
-
-    // println!("{:?}", wtr.as_string());
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
