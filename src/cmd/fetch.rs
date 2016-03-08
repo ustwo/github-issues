@@ -60,11 +60,10 @@ pub fn run(owner: &str,
            state: String,
            output_file: String) {
 
-    let page = 1;
     let labels_pair = if labels.is_empty() { "".to_string() }
                       else { format!("&labels={}", labels.join(",")) };
-    let url = format!("https://api.github.com/repos/{}/{}/issues?filter=all&state={}&page={}{}",
-                      owner, repo, state, page, labels_pair);
+    let url = format!("https://api.github.com/repos/{}/{}/issues?filter=all&state={}{}",
+                      owner, repo, state, labels_pair);
 
     let res = get_page(url, &oauth_token);
     let mut issues = to_issues(res.get_body()).unwrap();
