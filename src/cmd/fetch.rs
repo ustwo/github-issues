@@ -23,7 +23,7 @@ fn next_url(link: String) -> Option<String> {
     let re = Regex::new(r"<([^;]+)>;\s*rel=.next.").unwrap();
     match re.captures(&link) {
         None => None,
-        Some(cs) => Some(cs.at(1).unwrap().to_string())
+        Some(cs) => cs.at(1).as_ref().map(|x| x.to_string())
     }
 }
 
@@ -76,25 +76,29 @@ pub fn run(owner: &str,
                    "state",
                    "created_at",
                    "closed_at",
+                   "assignee",
                    "user",
                    "labels",
                    "body");
     wtr.encode(headers);
 
-    println!("{:?}", issues.len());
+    println!("Total issues collected: {:?}", issues.len());
 
     for issue in issues {
         let labels = issue.labels.iter()
                                  .map(|x| x.name.clone())
                                  .collect::<Vec<String>>()
                                  .join(",");
+        let user = issue.user;
+        let assignee = issue.assignee;
 
         let row = (issue.number,
                    issue.title,
                    issue.state,
                    issue.created_at,
                    issue.closed_at,
-                   issue.user.login,
+                   assignee,
+                   user,
                    labels,
                    issue.body);
 
@@ -109,6 +113,7 @@ pub fn run(owner: &str,
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct Issue {
+    assignee: Option<User>,
     body: Option<String>,
     created_at: Option<String>,
     closed_at: Option<String>,
@@ -116,8 +121,10 @@ struct Issue {
     number: u32,
     state: Option<String>,
     title: Option<String>,
-    user: User,
+    user: Option<User>,
 }
+
+type Issues = Vec<Issue>;
 
 type Labels = Vec<Label>;
 
