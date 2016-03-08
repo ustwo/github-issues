@@ -28,6 +28,11 @@ Alternatively, grab a [release](https://github.com/ustwo/github-issues/releases)
 and place it in your `$PATH`.
 
 
+## Contributing
+
+Check our [contributing guidelines](./CONTRIBUTING.md)
+
+
 ## Maintainers
 
 * [Arnau Siches](mailto:arnau@ustwo.com)
