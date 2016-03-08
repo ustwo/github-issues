@@ -27,7 +27,7 @@ fn next_url(link: String) -> Option<String> {
     }
 }
 
-fn to_issues(raw: &[u8]) -> Result<Vec<Issue>, json::DecoderError> {
+fn to_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
     match str::from_utf8(raw) {
         Ok(b) => json::decode(b),
         Err(..) => {
@@ -46,6 +46,7 @@ pub fn run(owner: &str,
     let page = 1;
     let url = format!("https://api.github.com/repos/{}/{}/issues?state=all&page={}&labels={}",
                       owner, repo, page, labels.join(","));
+
     println!("Fetching {:?}", url);
     let res = get_page(url, &oauth_token);
     let mut issues = to_issues(res.get_body()).unwrap();
@@ -117,7 +118,7 @@ struct Issue {
     body: Option<String>,
     created_at: Option<String>,
     closed_at: Option<String>,
-    labels: Vec<Label>,
+    labels: Labels,
     number: u32,
     state: Option<String>,
     title: Option<String>,
