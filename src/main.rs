@@ -30,16 +30,21 @@ Github issue consumer.
 
 Usage:
     github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
-    github-issues version
+    github-issues --version
     github-issues (-h | --help)
 
 Options:
-    -h, --help          Display this message
+    -h, --help                        Display this message
+    --version                         Display the current version
+    --oauth-token=<oauth_token>       Github OAuth authorisation token
+    --csv                             Output CSV
+    --output=<file>                   File where to store the data
+    --label=<label>                   Github label to filter with
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
-    cmd_version: bool,
+    flag_version: bool,
     cmd_fetch: bool,
     arg_repopath: String,
     flag_label: Vec<String>,
@@ -75,7 +80,7 @@ fn main() {
                             .and_then(|d| d.decode())
                             .unwrap_or_else(|e| e.exit());
 
-    if args.cmd_version {
+    if args.flag_version {
         println!("github-issues version {}", version());
         return;
     }
