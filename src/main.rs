@@ -29,7 +29,7 @@ const USAGE: &'static str = "
 Github issue consumer.
 
 Usage:
-    github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
+    github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--state=<state>] [--label=<label>...]
     github-issues --version
     github-issues (-h | --help)
 
@@ -39,6 +39,7 @@ Options:
     --oauth-token=<oauth_token>       Github OAuth authorisation token
     --csv                             Output CSV
     --output=<file>                   File where to store the data
+    --state=<state>                   Issue state [default: all]. Values: all | open | closed
     --label=<label>                   Github label to filter with
 ";
 
@@ -51,6 +52,7 @@ struct Args {
     flag_oauth_token: String,
     flag_csv: bool,
     flag_output: String,
+    flag_state: String,
 }
 
 // #[derive(Debug, RustcDecodable)]
@@ -94,6 +96,7 @@ fn main() {
                         repopath[1],
                         args.flag_oauth_token,
                         args.flag_label,
+                        args.flag_state,
                         args.flag_output);
     }
 }
