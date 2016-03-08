@@ -29,6 +29,7 @@ Github issue consumer.
 
 Usage:
     github-issues <command> <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
+    github-issues [options]
 
 Options:
     -h, --help          Display this message
@@ -56,9 +57,22 @@ enum Command {
 //     }
 // }
 
+pub fn version() -> String {
+    let (maj, min, pat) = (option_env!("CARGO_PKG_VERSION_MAJOR"),
+                           option_env!("CARGO_PKG_VERSION_MINOR"),
+                           option_env!("CARGO_PKG_VERSION_PATCH"));
+    match (maj, min, pat) {
+        (Some(maj), Some(min), Some(pat)) =>
+            format!("{}.{}.{}", maj, min, pat),
+        _ => "".to_owned(),
+    }
+}
+
 fn main() {
     let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.decode())
+                            .and_then(|d| d.options_first(true)
+                                           .version(Some(version()))
+                                           .decode())
                             .unwrap_or_else(|e| e.exit());
 
     match args.arg_command {

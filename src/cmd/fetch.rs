@@ -20,7 +20,9 @@ fn get_page(url: String, token: &str) -> http::Response {
     if res.get_code() != 200 {
         match str::from_utf8(res.get_body()) {
             Ok(b) => {
+                println!("\n*******************************************************************************");
                 println!("{:?}", json::decode::<GithubError>(b).ok());
+                println!("*******************************************************************************\n");
                 process::exit(1)
             }
             Err(..) => {
