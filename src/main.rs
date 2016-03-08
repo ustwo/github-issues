@@ -16,16 +16,6 @@ use docopt::Docopt;
 mod say;
 mod cmd;
 
-macro_rules! check_repopath {
-    ($path:expr) => (
-        if $path.len() != 2 {
-            println!("<repopath> must have the form <owner>/<repo>.  e.g. ustwo/github-issues");
-            process::exit(1)
-        }
-    );
-}
-
-// github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--label=<label>...]
 const USAGE: &'static str = "
 Github issue consumer.
 
@@ -89,12 +79,13 @@ fn main() {
     }
 
     if args.cmd_fetch {
-        let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
+        // let repopath: Vec<&str> = args.arg_repopath.split("/").collect();
 
-        check_repopath!(repopath);
+        // check_repopath!(repopath);
 
-        cmd::fetch::run(repopath[0],
-                        repopath[1],
+        // cmd::fetch::run(repopath[0],
+        //                 repopath[1],
+        cmd::fetch::run(args.arg_repopath,
                         args.flag_oauth_token,
                         args.flag_label,
                         args.flag_state,

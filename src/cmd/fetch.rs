@@ -9,6 +9,15 @@ use rustc_serialize::json;
 
 use say;
 
+macro_rules! check_repopath {
+    ($path:expr) => (
+        if $path.len() != 2 {
+            println!("{} {}", say::error(), "<repopath> must have the form <owner>/<repo>.  e.g. ustwo/github-issues");
+            process::exit(1)
+        }
+    );
+}
+
 fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
     headers.get("x-ratelimit-remaining").unwrap()
            .first().unwrap().to_string()
@@ -60,12 +69,21 @@ fn to_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
     }
 }
 
-pub fn run(owner: &str,
-           repo: &str,
+fn parse_repopath(path: String) -> (String, String) {
+    let list: Vec<&str> = path.split("/").collect();
+
+    check_repopath!(list);
+
+    (list[0].to_string(), list[1].to_string())
+}
+
+pub fn run(repopath: String,
            oauth_token: String,
            labels: Vec<String>,
            state: String,
            output_file: String) {
+
+    let (owner, repo) = parse_repopath(repopath);
 
     let labels_pair = if labels.is_empty() { "".to_string() }
                       else { format!("&labels={}", labels.join(",")) };
