@@ -1,8 +1,9 @@
 extern crate csv;
-extern crate regex;
 extern crate curl;
 extern crate docopt;
+extern crate regex;
 extern crate rustc_serialize;
+extern crate ansi_term;
 
 #[macro_use]
 extern crate log;
@@ -12,8 +13,8 @@ extern crate log;
 use std::process;
 use docopt::Docopt;
 
+mod say;
 mod cmd;
-
 
 macro_rules! check_repopath {
     ($path:expr) => (

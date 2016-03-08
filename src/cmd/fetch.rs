@@ -1,13 +1,23 @@
 use csv;
 use regex::Regex;
 use std::result::Result;
+use std::collections::HashMap;
 use std::str;
 use std::process;
 use curl::http;
 use rustc_serialize::json;
+use ansi_term::Colour::{Green, Yellow, Red, White};
+
+use say;
+
+fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
+    headers.get("x-ratelimit-remaining").unwrap()
+           .first().unwrap().to_string()
+}
 
 fn get_page(url: String, token: &str) -> http::Response {
-    println!("Fetching {:?}", url);
+    println!("{} {} {}", say::info(), "Fetching", url);
+
     let auth_header = format!("token {}", token);
     let res = http::handle()
                    .get(url)
@@ -20,13 +30,11 @@ fn get_page(url: String, token: &str) -> http::Response {
     if res.get_code() != 200 {
         match str::from_utf8(res.get_body()) {
             Ok(b) => {
-                println!("\n*******************************************************************************");
-                println!("{:?}", json::decode::<GithubError>(b).ok());
-                println!("*******************************************************************************\n");
+                println!("{} {:?}", say::error(), json::decode::<GithubError>(b).ok());
                 process::exit(1)
             }
             Err(..) => {
-                println!("Unable to parse the response from Github");
+                println!("{} {}", say::error(), "Unable to parse the response from Github");
                 process::exit(1)
             }
         }
@@ -47,7 +55,7 @@ fn to_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
     match str::from_utf8(raw) {
         Ok(b) => json::decode(b),
         Err(..) => {
-            println!("Unable to parse the response from Github");
+            println!("{} {}", say::error(), "Unable to parse the response from Github");
             process::exit(1)
         }
     }
@@ -73,6 +81,9 @@ pub fn run(owner: &str,
     match res.get_headers().get("link") {
         Some(links) => {
             let mut nurl = next_url(links.first().unwrap().clone());
+            if nurl.is_none() {
+                println!("{} {} {}", say::warn(), ratelimit(res.get_headers()), "Remaining requests");
+            }
 
             while let Some(nu) = nurl {
                 let r = get_page(nu.to_string(), &oauth_token);
@@ -82,6 +93,9 @@ pub fn run(owner: &str,
                                           .first().unwrap()
                                           .clone();
                 nurl = next_url(link);
+                if nurl.is_none() {
+                    println!("{} {} {}", say::warn(), ratelimit(r.get_headers()), "Remaining requests");
+                }
             }
         }
         _ => {}
@@ -101,7 +115,7 @@ pub fn run(owner: &str,
                    "body");
     wtr.encode(headers);
 
-    println!("Total issues collected: {:?}", issues.len());
+    println!("{} {}", White.bold().paint("Total issues collected:"), issues.len());
 
     for issue in issues {
         let labels = issue.labels.iter()
