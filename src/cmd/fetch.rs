@@ -51,6 +51,8 @@ pub fn run(owner: &str,
     let res = get_page(url, &oauth_token);
     let mut issues = to_issues(res.get_body()).unwrap();
 
+    // A Link header is not present if the requested collection has less than
+    // _pagesize_.
     match res.get_headers().get("link") {
         Some(links) => {
             let mut nurl = next_url(links.first().unwrap().clone());
