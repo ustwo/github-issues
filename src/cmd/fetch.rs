@@ -6,7 +6,6 @@ use std::str;
 use std::process;
 use curl::http;
 use rustc_serialize::json;
-use ansi_term::Colour::{Green, Yellow, Red, White};
 
 use say;
 
@@ -115,7 +114,7 @@ pub fn run(owner: &str,
                    "body");
     wtr.encode(headers);
 
-    println!("{} {}", White.bold().paint("Total issues collected:"), issues.len());
+    println!("{} {}", say::highlight("Total issues collected:"), issues.len());
 
     for issue in issues {
         let labels = issue.labels.iter()

@@ -12,3 +12,7 @@ pub fn warn() -> String {
 pub fn error() -> String {
     Red.paint("Error:").to_string()
 }
+
+pub fn highlight(text: &str) -> String {
+    White.bold().paint(text).to_string()
+}
