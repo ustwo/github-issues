@@ -69,7 +69,12 @@ fn main() {
         let format = value_t!(matches, "format", OutputFormat).unwrap_or_else(|e| e.exit());
         let output = matches.value_of("output").unwrap().to_owned();
 
-        cmd::fetch::run(repopath, oauth_token, labels, state, format, output);
+        cmd::fetch::run(repopath,
+                        oauth_token,
+                        labels,
+                        state,
+                        format,
+                        output);
     }
 }
 

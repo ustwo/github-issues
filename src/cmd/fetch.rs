@@ -51,7 +51,7 @@ fn next_url(link: String) -> Option<String> {
     }
 }
 
-fn to_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
+fn as_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
     match str::from_utf8(raw) {
         Ok(b) => json::decode(b),
         Err(..) => {
@@ -81,7 +81,7 @@ pub fn run(repopath: String,
                       repopath, state, labels_pair);
 
     let res = get_page(url, &oauth_token);
-    let mut issues = to_issues(res.get_body()).unwrap();
+    let mut issues = as_issues(res.get_body()).unwrap();
 
     // A Link header is not present if the requested collection has less than
     // _pagesize_.
@@ -94,7 +94,7 @@ pub fn run(repopath: String,
 
             while let Some(nu) = nurl {
                 let r = get_page(nu.to_string(), &oauth_token);
-                issues.extend(to_issues(r.get_body()).unwrap());
+                issues.extend(as_issues(r.get_body()).unwrap());
 
                 let link = r.get_headers().get("link").unwrap()
                                           .first().unwrap()
@@ -108,8 +108,16 @@ pub fn run(repopath: String,
         _ => {}
     }
 
-    let mut wtr = csv::Writer::from_file(output_file).unwrap();
+    println!("{} {}", say::highlight("Total issues collected:"), issues.len());
 
+
+    match format {
+        OutputFormat::CSV => write_csv(issues, output_file),
+    }
+}
+
+fn write_csv(issues: Issues, output_file: String) {
+    let mut wtr = csv::Writer::from_file(output_file).unwrap();
 
     let headers = ("number",
                    "title",
@@ -121,8 +129,6 @@ pub fn run(repopath: String,
                    "labels",
                    "body");
     wtr.encode(headers);
-
-    println!("{} {}", say::highlight("Total issues collected:"), issues.len());
 
     for issue in issues {
         let labels = issue.labels.iter()
