@@ -1,7 +1,9 @@
 extern crate ansi_term;
+
+#[macro_use]
+extern crate clap;
 extern crate csv;
 extern crate curl;
-extern crate docopt;
 extern crate env_logger;
 extern crate regex;
 extern crate rustc_serialize;
@@ -9,62 +11,71 @@ extern crate rustc_serialize;
 #[macro_use]
 extern crate log;
 
-use docopt::Docopt;
+use clap::{Arg, App, SubCommand};
 
 mod say;
 mod cmd;
 
-const USAGE: &'static str = "
-Github issue consumer.
-
-Usage:
-    github-issues fetch <repopath> --oauth-token=<oauth_token> --csv --output=<file> [--state=<state>] [--label=<label>...]
-    github-issues --version
-    github-issues (-h | --help)
-
-Options:
-    -h, --help                        Display this message
-    --version                         Display the current version
-    --oauth-token=<oauth_token>       Github OAuth authorisation token
-    --csv                             Output CSV
-    --output=<file>                   File where to store the data
-    --state=<state>                   Issue state [default: all]. Values: all | open | closed
-    --label=<label>                   Github label to filter with
-";
-
-#[derive(Debug, RustcDecodable)]
-struct Args {
-    flag_version: bool,
-    cmd_fetch: bool,
-    arg_repopath: String,
-    flag_label: Vec<String>,
-    flag_oauth_token: String,
-    flag_csv: bool,
-    flag_output: String,
-    flag_state: String,
-}
-
-pub fn version() -> String {
-    option_env!("CARGO_PKG_VERSION").unwrap().to_owned()
-}
-
 fn main() {
     env_logger::init().unwrap();
 
-    let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.decode())
-                            .unwrap_or_else(|e| e.exit());
+    let matches = App::new("github-issues")
+                      .version(crate_version!())
+                      .author("Arnau Siches <arnau@ustwo.com>")
+                      .about("Github issues consumer.")
+                      .subcommand(SubCommand::with_name("fetch")
+                                             .about("Fetch issues from Github.")
+                                             .arg(Arg::with_name("repopath")
+                                                      .help("Repo path (e.g. ustwo/mastermind)")
+                                                      .index(1)
+                                                      .validator(is_repopath)
+                                                      .required(true))
+                                             .arg(Arg::with_name("oauth-token")
+                                                      .help("Github OAuth authorisation token")
+                                                      .long("oauth-token")
+                                                      .value_name("oauth_token")
+                                                      .required(true))
+                                             .arg(Arg::with_name("format")
+                                                      .help("Output format")
+                                                      .long("format")
+                                                      .value_name("format")
+                                                      .possible_values(&["csv"])
+                                                      .required(true))
+                                             .arg(Arg::with_name("output")
+                                                      .help("Write output to <file>")
+                                                      .long("output")
+                                                      .value_name("file")
+                                                      .required(true))
+                                             .arg(Arg::with_name("state")
+                                                      .help("Issue state. Defaults to \"all\"")
+                                                      .long("state")
+                                                      .value_name("state")
+                                                      .possible_values(&["all", "open", "closed"]))
+                                             .arg(Arg::with_name("label")
+                                                      .help("Github label to filter with")
+                                                      .long("label")
+                                                      .value_name("label")
+                                                      .multiple(true)))
+                      .get_matches();
 
-    if args.flag_version {
-        println!("github-issues version {}", version());
-        return;
+    if let Some(ref matches) = matches.subcommand_matches("fetch") {
+        let labels: Vec<String> = values_t!(matches, "label", String).unwrap_or(vec![]);
+        let state = matches.value_of("state").unwrap_or("all").to_owned();
+        let repopath = matches.value_of("repopath").unwrap().to_owned();
+        let oauth_token = matches.value_of("oauth-token").unwrap().to_owned();
+        let format = matches.value_of("format").unwrap().to_owned();
+        let output = matches.value_of("output").unwrap().to_owned();
+
+        cmd::fetch::run(repopath, oauth_token, labels, state, format, output);
+    }
+}
+
+// Validators
+
+fn is_repopath(value: String) -> Result<(), String> {
+    if value.split("/").collect::<Vec<&str>>().len() < 2 {
+        return Err(String::from("<repopath> must have the form <owner>/<repo>.  e.g. ustwo/github-issues"));
     }
 
-    if args.cmd_fetch {
-        cmd::fetch::run(args.arg_repopath,
-                        args.flag_oauth_token,
-                        args.flag_label,
-                        args.flag_state,
-                        args.flag_output);
-    }
+    Ok(())
 }

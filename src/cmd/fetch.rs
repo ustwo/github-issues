@@ -9,15 +9,6 @@ use rustc_serialize::json;
 
 use say;
 
-macro_rules! check_repopath {
-    ($path:expr) => (
-        if $path.len() != 2 {
-            println!("{} {}", say::error(), "<repopath> must have the form <owner>/<repo>.  e.g. ustwo/github-issues");
-            process::exit(1)
-        }
-    );
-}
-
 fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
     headers.get("x-ratelimit-remaining").unwrap()
            .first().unwrap().to_string()
@@ -72,8 +63,6 @@ fn to_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
 fn parse_repopath(path: String) -> (String, String) {
     let list: Vec<&str> = path.split("/").collect();
 
-    check_repopath!(list);
-
     (list[0].to_string(), list[1].to_string())
 }
 
@@ -81,13 +70,14 @@ pub fn run(repopath: String,
            oauth_token: String,
            labels: Vec<String>,
            state: String,
+           format: String,
            output_file: String) {
 
-    let (owner, repo) = parse_repopath(repopath);
-    let labels_pair = if labels.is_empty() { "".to_string() }
+    // let (owner, repo) = parse_repopath(repopath);
+    let labels_pair = if labels.is_empty() { "".to_owned() }
                       else { format!("&labels={}", labels.join(",")) };
-    let url = format!("https://api.github.com/repos/{}/{}/issues?filter=all&state={}{}",
-                      owner, repo, state, labels_pair);
+    let url = format!("https://api.github.com/repos/{}/issues?filter=all&state={}{}",
+                      repopath, state, labels_pair);
 
     let res = get_page(url, &oauth_token);
     let mut issues = to_issues(res.get_body()).unwrap();
