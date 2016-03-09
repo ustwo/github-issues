@@ -9,7 +9,7 @@ Github repository and it stores as CSV.
 ```sh
 github-issues fetch ustwo/ustwo.com-frontend \
                     --oauth-token=$GITHUB_TOKEN \
-                    --csv \
+                    --format=csv \
                     --output=usweb.csv \
                     --label=in_backlog \
                     --label=bug
