@@ -8,6 +8,7 @@ use curl::http;
 use rustc_serialize::json;
 
 use say;
+use format::{OutputFormat};
 
 fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
     headers.get("x-ratelimit-remaining").unwrap()
@@ -70,7 +71,7 @@ pub fn run(repopath: String,
            oauth_token: String,
            labels: Vec<String>,
            state: String,
-           format: String,
+           format: OutputFormat,
            output_file: String) {
 
     // let (owner, repo) = parse_repopath(repopath);
@@ -108,6 +109,8 @@ pub fn run(repopath: String,
     }
 
     let mut wtr = csv::Writer::from_file(output_file).unwrap();
+
+
     let headers = ("number",
                    "title",
                    "state",

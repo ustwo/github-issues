@@ -14,7 +14,10 @@ extern crate log;
 use clap::{Arg, App, SubCommand};
 
 mod say;
+mod format;
 mod cmd;
+
+use format::{OutputFormat};
 
 fn main() {
     env_logger::init().unwrap();
@@ -63,7 +66,7 @@ fn main() {
         let state = matches.value_of("state").unwrap_or("all").to_owned();
         let repopath = matches.value_of("repopath").unwrap().to_owned();
         let oauth_token = matches.value_of("oauth-token").unwrap().to_owned();
-        let format = matches.value_of("format").unwrap().to_owned();
+        let format = value_t!(matches, "format", OutputFormat).unwrap_or_else(|e| e.exit());
         let output = matches.value_of("output").unwrap().to_owned();
 
         cmd::fetch::run(repopath, oauth_token, labels, state, format, output);
