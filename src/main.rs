@@ -1,9 +1,10 @@
+extern crate ansi_term;
 extern crate csv;
 extern crate curl;
 extern crate docopt;
+extern crate env_logger;
 extern crate regex;
 extern crate rustc_serialize;
-extern crate ansi_term;
 
 #[macro_use]
 extern crate log;
@@ -44,17 +45,12 @@ struct Args {
 }
 
 pub fn version() -> String {
-    let (maj, min, pat) = (option_env!("CARGO_PKG_VERSION_MAJOR"),
-                           option_env!("CARGO_PKG_VERSION_MINOR"),
-                           option_env!("CARGO_PKG_VERSION_PATCH"));
-    match (maj, min, pat) {
-        (Some(maj), Some(min), Some(pat)) =>
-            format!("{}.{}.{}", maj, min, pat),
-        _ => "".to_owned(),
-    }
+    option_env!("CARGO_PKG_VERSION").unwrap().to_owned()
 }
 
 fn main() {
+    env_logger::init().unwrap();
+
     let args: Args = Docopt::new(USAGE)
                             .and_then(|d| d.decode())
                             .unwrap_or_else(|e| e.exit());
