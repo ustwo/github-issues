@@ -42,7 +42,7 @@ fn main() {
                                                       .help("Output format")
                                                       .long("format")
                                                       .value_name("format")
-                                                      .possible_values(&["csv"])
+                                                      .possible_values(&["csv", "json"])
                                                       .required(true))
                                              .arg(Arg::with_name("output")
                                                       .help("Write output to <file>")

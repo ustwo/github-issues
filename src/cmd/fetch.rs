@@ -1,11 +1,13 @@
+use std::io::prelude::*;
 use csv;
-use regex::Regex;
-use std::result::Result;
-use std::collections::HashMap;
-use std::str;
-use std::process;
 use curl::http;
+use regex::Regex;
 use rustc_serialize::json;
+use std::collections::HashMap;
+use std::fs::File;
+use std::process;
+use std::result::Result;
+use std::str;
 
 use say;
 use format::{OutputFormat};
@@ -88,9 +90,6 @@ pub fn run(repopath: String,
     match res.get_headers().get("link") {
         Some(links) => {
             let mut nurl = next_url(links.first().unwrap().clone());
-            if nurl.is_none() {
-                println!("{} {} {}", say::warn(), ratelimit(res.get_headers()), "Remaining requests");
-            }
 
             while let Some(nu) = nurl {
                 let r = get_page(nu.to_string(), &oauth_token);
@@ -105,7 +104,9 @@ pub fn run(repopath: String,
                 }
             }
         }
-        _ => {}
+        _ => {
+            println!("{} {} {}", say::warn(), ratelimit(res.get_headers()), "Remaining requests");
+        }
     }
 
     println!("{} {}", say::highlight("Total issues collected:"), issues.len());
@@ -113,7 +114,15 @@ pub fn run(repopath: String,
 
     match format {
         OutputFormat::CSV => write_csv(issues, output_file),
+        OutputFormat::JSON => write_json(issues, output_file),
     }
+}
+
+
+fn write_json(issues: Issues, output_file: String) {
+    let mut f = File::create(output_file).unwrap();
+    let string: String = json::encode(&issues).unwrap();
+    f.write_all(string.as_bytes());
 }
 
 fn write_csv(issues: Issues, output_file: String) {
@@ -171,7 +180,6 @@ type Labels = Vec<Label>;
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct Label {
-    color: String,
     name: String,
 }
 
