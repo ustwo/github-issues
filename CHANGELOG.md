@@ -2,6 +2,7 @@
 
 ## next
 
+* Add JSON output format.
 
 ## 0.2.0
 
