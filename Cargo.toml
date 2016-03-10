@@ -15,8 +15,8 @@ rustc-serialize = "0.3"
 
 [[bin]]
 name = "github-issues"
-test = false
+test = true
 doc = false
 
-[[test]]
-name = "lib"
+# [lib]
+# name = nerve
