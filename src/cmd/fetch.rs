@@ -13,16 +13,18 @@ use say;
 use format::{OutputFormat};
 use github::entities::{Issue, Issues, GithubError};
 
-fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
-    headers.get("x-ratelimit-remaining").unwrap()
-           .first().unwrap().to_string()
+fn ratelimit(headers: &HashMap<String, Vec<String>>) -> u32 {
+    let rate = headers.get("x-ratelimit-remaining").unwrap()
+                      .first().unwrap();
+
+    rate.parse().unwrap()
 }
 #[test]
 fn valid_ratelimit() {
     let mut headers: HashMap<String, Vec<String>> = HashMap::new();
     headers.insert("x-ratelimit-remaining".to_owned(), vec!["1".to_owned()]);
 
-    assert_eq!(ratelimit(&headers), "1");
+    assert_eq!(ratelimit(&headers), 1);
 }
 
 fn get_page(url: String, token: &str) -> http::Response {
