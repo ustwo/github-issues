@@ -2,6 +2,14 @@ repo_name := github-issues
 version := v$(shell cat Cargo.toml | grep version | cut -d '"' -f2)
 artifact_osx = $(repo_name)-$(version)-osx-amd64.tar.gz
 
+test:
+	@cargo test
+.PHONY: test
+
+build:
+	@cargo build --release
+.PHONY: artifact
+
 release: release-create release-artifacts
 	git tag $(version)
 	# git push --tags origin $(GIT_BRANCH)
@@ -31,10 +39,6 @@ release-delete:
 
 artifacts: dist/$(artifact_osx)
 .PHONY: artifacts
-
-build:
-	@cargo build --release
-.PHONY: artifact
 
 dist/$(artifact_osx): build
 	@mkdir -p dist
