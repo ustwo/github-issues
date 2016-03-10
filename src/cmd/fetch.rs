@@ -11,7 +11,7 @@ use std::str;
 
 use say;
 use format::{OutputFormat};
-use github::entities::{Issue, Issues, GithubError};
+use github::entities::{Issues, GithubError};
 
 fn ratelimit(headers: &HashMap<String, Vec<String>>) -> u32 {
     let rate = headers.get("x-ratelimit-remaining").unwrap()
@@ -37,7 +37,7 @@ fn get_page(url: String, token: &str) -> http::Response {
                    .header("User-Agent", "Github-Issues-CLI")
                    .header("Accept", "application/vnd.github.v3+json")
                    .exec()
-                   .unwrap_or_else(|e| process::exit(1));
+                   .unwrap_or_else(|_| process::exit(1));
 
     if res.get_code() != 200 {
         match str::from_utf8(res.get_body()) {
@@ -73,11 +73,12 @@ fn as_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
     }
 }
 
-fn parse_repopath(path: String) -> (String, String) {
-    let list: Vec<&str> = path.split("/").collect();
+// TODO: Review its need
+// fn parse_repopath(path: String) -> (String, String) {
+//     let list: Vec<&str> = path.split("/").collect();
 
-    (list[0].to_string(), list[1].to_string())
-}
+//     (list[0].to_string(), list[1].to_string())
+// }
 
 pub fn run(repopath: String,
            oauth_token: String,
@@ -132,7 +133,7 @@ pub fn run(repopath: String,
 fn write_json(issues: Issues, output_file: String) {
     let mut f = File::create(output_file).unwrap();
     let string: String = json::encode(&issues).unwrap();
-    f.write_all(string.as_bytes());
+    let _ = f.write_all(string.as_bytes());
 }
 
 fn write_csv(issues: Issues, output_file: String) {
@@ -147,7 +148,7 @@ fn write_csv(issues: Issues, output_file: String) {
                    "user",
                    "labels",
                    "body");
-    wtr.encode(headers);
+    let _ = wtr.encode(headers);
 
     for issue in issues {
         let labels = issue.labels.iter()
@@ -167,6 +168,6 @@ fn write_csv(issues: Issues, output_file: String) {
                    labels,
                    issue.body);
 
-        wtr.encode(row);
+        let _ = wtr.encode(row);
     }
 }
