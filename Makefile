@@ -11,8 +11,6 @@ build:
 .PHONY: artifact
 
 release: release-create release-artifacts
-	git tag $(version)
-	# git push --tags origin $(GIT_BRANCH)
 .PHONY: release
 
 release-create:
