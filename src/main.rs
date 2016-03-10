@@ -13,11 +13,14 @@ extern crate log;
 
 use clap::{Arg, App, SubCommand};
 
-mod say;
-mod format;
 mod cmd;
+mod format;
+mod github;
+mod say;
+mod validators;
 
 use format::{OutputFormat};
+use validators::{is_repopath};
 
 fn main() {
     env_logger::init().unwrap();
@@ -76,14 +79,4 @@ fn main() {
                         format,
                         output);
     }
-}
-
-// Validators
-
-fn is_repopath(value: String) -> Result<(), String> {
-    if value.split("/").collect::<Vec<&str>>().len() < 2 {
-        return Err(String::from("<repopath> must have the form <owner>/<repo>.  e.g. ustwo/github-issues"));
-    }
-
-    Ok(())
 }

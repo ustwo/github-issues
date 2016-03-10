@@ -11,6 +11,7 @@ use std::str;
 
 use say;
 use format::{OutputFormat};
+use github::entities::{Issue, Issues, GithubError};
 
 fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
     headers.get("x-ratelimit-remaining").unwrap()
@@ -161,35 +162,8 @@ fn write_csv(issues: Issues, output_file: String) {
     }
 }
 
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-struct Issue {
-    assignee: Option<User>,
-    body: Option<String>,
-    created_at: Option<String>,
-    closed_at: Option<String>,
-    labels: Labels,
-    number: u32,
-    state: Option<String>,
-    title: Option<String>,
-    user: Option<User>,
-}
 
-type Issues = Vec<Issue>;
-
-type Labels = Vec<Label>;
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-struct Label {
-    name: String,
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-struct User {
-    login: String,
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-struct GithubError {
-    message: String,
-    documentation_url: String,
-}
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+// }
