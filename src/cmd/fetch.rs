@@ -17,6 +17,13 @@ fn ratelimit(headers: &HashMap<String, Vec<String>>) -> String {
     headers.get("x-ratelimit-remaining").unwrap()
            .first().unwrap().to_string()
 }
+#[test]
+fn valid_ratelimit() {
+    let mut headers: HashMap<String, Vec<String>> = HashMap::new();
+    headers.insert("x-ratelimit-remaining".to_owned(), vec!["1".to_owned()]);
+
+    assert_eq!(ratelimit(&headers), "1");
+}
 
 fn get_page(url: String, token: &str) -> http::Response {
     println!("{} {} {}", say::info(), "Fetching", url);
@@ -161,9 +168,3 @@ fn write_csv(issues: Issues, output_file: String) {
         wtr.encode(row);
     }
 }
-
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-// }
