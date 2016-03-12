@@ -1,15 +1,11 @@
+#[macro_use] extern crate clap;
+#[macro_use] extern crate hyper;
+#[macro_use] extern crate log;
 extern crate ansi_term;
-
-#[macro_use]
-extern crate clap;
 extern crate csv;
-extern crate curl;
 extern crate env_logger;
 extern crate regex;
 extern crate rustc_serialize;
-
-#[macro_use]
-extern crate log;
 
 use clap::{Arg, App, SubCommand};
 

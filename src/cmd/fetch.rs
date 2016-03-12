@@ -1,58 +1,67 @@
 use std::io::prelude::*;
 use csv;
-use curl::http;
 use regex::Regex;
 use rustc_serialize::json;
-use std::collections::HashMap;
 use std::fs::File;
 use std::process;
 use std::result::Result;
-use std::str;
+
+use hyper;
+use hyper::Client;
+use hyper::header::{Accept, Authorization, Connection, UserAgent, qitem};
+use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 
 use say;
 use format::{OutputFormat};
-use github::entities::{Issues, GithubError};
+use github::entities::{Issues};
 
-fn ratelimit(headers: &HashMap<String, Vec<String>>) -> u32 {
-    let rate = headers.get("x-ratelimit-remaining").unwrap()
-                      .first().unwrap();
+header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
 
-    rate.parse().unwrap()
-}
-#[test]
-fn valid_ratelimit() {
-    let mut headers: HashMap<String, Vec<String>> = HashMap::new();
-    headers.insert("x-ratelimit-remaining".to_owned(), vec!["1".to_owned()]);
+header! { (Link, "Link") => [String] }
 
-    assert_eq!(ratelimit(&headers), 1);
+fn ratelimit(headers: &hyper::header::Headers) -> u32 {
+    match headers.get() {
+        Some(&XRateLimitRemaining(x)) => x,
+        None => 0
+    }
 }
 
-fn get_page(url: String, token: &str) -> http::Response {
+fn get_page(url: String, token: String) -> hyper::client::Response {
     println!("{} {} {}", say::info(), "Fetching", url);
 
-    let auth_header = format!("token {}", token);
-    let res = http::handle()
-                   .get(url)
-                   .header("Authorization", &auth_header)
-                   .header("User-Agent", "Github-Issues-CLI")
-                   .header("Accept", "application/vnd.github.v3+json")
-                   .exec()
-                   .unwrap_or_else(|_| process::exit(1));
+    let client = Client::new();
+    let res = client.get(&*url.clone())
+                    .header(UserAgent(format!("nerve/{}", crate_version!())))
+                    .header(Authorization(format!("token {}", token)))
+                    .header(Accept(vec![qitem(Mime(TopLevel::Application,
+                                                   SubLevel::Ext("vnd.github.v3+json".to_owned()),
+                                                   vec![(Attr::Charset, Value::Utf8)]))]))
+                    .header(Connection::close())
+                    .send().unwrap_or_else(|_| process::exit(1));
 
-    if res.get_code() != 200 {
-        match str::from_utf8(res.get_body()) {
-            Ok(b) => {
-                println!("{} {:?}", say::error(), json::decode::<GithubError>(b).ok());
-                process::exit(1)
-            }
-            Err(..) => {
-                println!("{} {}", say::error(), "Unable to parse the response from Github");
-                process::exit(1)
-            }
+    match res.status {
+        hyper::Ok => {
+        
+        }
+        _ => {
+            println!("{} {}", say::error(), "Unable to parse the response from Github");
+            process::exit(1)
         }
     }
 
+    // Read the Response.
+    // let mut body = String::new();
+    // res.read_to_string(&mut body).unwrap();
+    // println!("Response: {}", body);
+
     res
+}
+
+fn link(headers: &hyper::header::Headers) -> String {
+    match headers.get() {
+        Some(&Link(ref x)) => x.to_string(),
+        None => "".to_string()
+    }
 }
 
 fn next_url(link: String) -> Option<String> {
@@ -63,22 +72,19 @@ fn next_url(link: String) -> Option<String> {
     }
 }
 
-fn as_issues(raw: &[u8]) -> Result<Issues, json::DecoderError> {
-    match str::from_utf8(raw) {
-        Ok(b) => json::decode(b),
-        Err(..) => {
-            println!("{} {}", say::error(), "Unable to parse the response from Github");
-            process::exit(1)
-        }
-    }
-}
-
 // TODO: Review its need
 // fn parse_repopath(path: String) -> (String, String) {
 //     let list: Vec<&str> = path.split("/").collect();
 
 //     (list[0].to_string(), list[1].to_string())
 // }
+
+fn as_issues(res: &mut hyper::client::Response) -> Result<Issues, json::DecoderError> {
+    let mut body = String::new();
+    res.read_to_string(&mut body).unwrap();
+
+    json::decode(&body)
+}
 
 pub fn run(repopath: String,
            oauth_token: String,
@@ -93,30 +99,25 @@ pub fn run(repopath: String,
     let url = format!("https://api.github.com/repos/{}/issues?filter=all&state={}{}",
                       repopath, state, labels_pair);
 
-    let res = get_page(url, &oauth_token);
-    let mut issues = as_issues(res.get_body()).unwrap();
+    let mut res = get_page(url, oauth_token.to_string());
+    let mut issues = as_issues(&mut res).unwrap();
+
 
     // A Link header is not present if the requested collection has less than
     // _pagesize_.
-    match res.get_headers().get("link") {
-        Some(links) => {
-            let mut nurl = next_url(links.first().unwrap().clone());
+    let mut nurl = next_url(link(&res.headers));
 
-            while let Some(nu) = nurl {
-                let r = get_page(nu.to_string(), &oauth_token);
-                issues.extend(as_issues(r.get_body()).unwrap());
+    if nurl.is_none() {
+        println!("{} {} {}", say::warn(), ratelimit(&res.headers), "Remaining requests");
+    }
 
-                let link = r.get_headers().get("link").unwrap()
-                                          .first().unwrap()
-                                          .clone();
-                nurl = next_url(link);
-                if nurl.is_none() {
-                    println!("{} {} {}", say::warn(), ratelimit(r.get_headers()), "Remaining requests");
-                }
-            }
-        }
-        _ => {
-            println!("{} {} {}", say::warn(), ratelimit(res.get_headers()), "Remaining requests");
+    while let Some(nu) = nurl {
+        let mut r = get_page(nu.to_string(), oauth_token.to_string());
+        issues.extend(as_issues(&mut r).unwrap());
+
+        nurl = next_url(link(&r.headers));
+        if nurl.is_none() {
+            println!("{} {} {}", say::warn(), ratelimit(&r.headers), "Remaining requests");
         }
     }
 
