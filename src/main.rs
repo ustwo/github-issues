@@ -1,28 +1,20 @@
 #[macro_use] extern crate clap;
-#[macro_use] extern crate hyper;
 #[macro_use] extern crate log;
-extern crate ansi_term;
-extern crate csv;
 extern crate env_logger;
-extern crate regex;
-extern crate rustc_serialize;
+
+extern crate nerve;
 
 use clap::{Arg, App, SubCommand};
 
-mod cmd;
-mod format;
-mod github;
-mod say;
-mod validators;
-
-use format::{OutputFormat};
-use validators::{is_repopath};
+use nerve::cmd;
+use nerve::format::{OutputFormat};
+use nerve::validators::{is_repopath};
 
 fn main() {
     env_logger::init().unwrap();
 
     let matches = App::new("github-issues")
-                      .version(crate_version!())
+                      .version(env!("CARGO_PKG_VERSION"))
                       .author("Arnau Siches <arnau@ustwo.com>")
                       .about("Github issues consumer.")
                       .subcommand(SubCommand::with_name("fetch")
