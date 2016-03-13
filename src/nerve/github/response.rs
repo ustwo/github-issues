@@ -49,9 +49,7 @@ fn get_page(url: String, token: &str) -> hyper::client::Response {
                     .send().unwrap_or_else(|_| process::exit(1));
 
     match res.status {
-        hyper::Ok => {
-        
-        }
+        hyper::Ok => {}
         _ => {
             println!("{} {}", say::error(), "Unable to parse the response from Github");
             process::exit(1)
