@@ -1,3 +1,8 @@
+//! Fetch command
+//!
+//! It fetches issues and serialises them based on the defined output format.
+//! Currently csv or json.
+
 use csv;
 use rustc_serialize::json;
 use std::fs::File;
@@ -23,8 +28,10 @@ pub fn run(repopath: String,
 
     let labels_pair = if labels.is_empty() { "".to_owned() }
                       else { format!("&labels={}", labels.join(",")) };
-    let url = format!("https://api.github.com/repos/{}/issues?filter=all&state={}{}",
-                      repopath, state, labels_pair);
+    let url = format!("https://api.github.com/repos/{repopath}/issues?filter=all&state={state}{labels_pair}",
+                      repopath = repopath,
+                      state = state,
+                      labels_pair = labels_pair);
 
     let page = Page::new(&url, &oauth_token);
     let mut issues = as_issues(&page.content).unwrap();

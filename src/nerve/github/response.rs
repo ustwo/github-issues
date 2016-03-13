@@ -1,5 +1,6 @@
 use hyper;
 use hyper::Client;
+use hyper::client::Response;
 use hyper::header::{Headers, Accept, Authorization, Connection, UserAgent, qitem};
 use regex::Regex;
 use std::io::prelude::*;
@@ -37,7 +38,7 @@ impl Page {
     }
 }
 
-fn get_page(url: String, token: &str) -> hyper::client::Response {
+fn get_page(url: String, token: &str) -> Response {
     println!("{} {} {}", say::info(), "Fetching", url);
 
     let client = Client::new();
@@ -68,7 +69,7 @@ pub fn ratelimit(headers: &Headers) -> u32 {
 
 // A Link header is not present if the requested collection has less than
 // _pagesize_.
-pub fn link(headers: &hyper::header::Headers) -> String {
+pub fn link(headers: &Headers) -> String {
     match headers.get() {
         Some(&Link(ref x)) => x.to_string(),
         None => "".to_string()
