@@ -1,3 +1,4 @@
+use std::fmt;
 use hyper;
 use hyper::Client;
 use hyper::client::Response;
@@ -35,6 +36,15 @@ impl Page {
         if self.next.is_none() {
             println!("{} {} {}", say::warn(), self.ratelimit, "Remaining requests");
         }
+    }
+}
+
+impl fmt::Display for Page {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{");
+        write!(f, "next: {:?},", self.next);
+        write!(f, "ratelimit: {}", self.ratelimit);
+        write!(f, "}}")
     }
 }
 
