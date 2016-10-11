@@ -38,6 +38,11 @@ Check our [contributing guidelines](./CONTRIBUTING.md)
 * [Arnau Siches](mailto:arnau@ustwo.com)
 
 
+## Contact
+
+open.source@ustwo.com
+
+
 ## License
 
 This is a proof of concept with no guarantee of active maintenance.
