@@ -4,19 +4,20 @@ version = "0.2.0"
 authors = ["Arnau Siches <arnau@ustwo.com>"]
 
 [dependencies]
-ansi_term = "0.7"
+ansi_term = "0.9"
 csv = "0.14"
-curl = "0.2"
-clap = "2.1"
+clap = "2.16"
 env_logger = "0.3"
 log = "0.3"
 regex = "0.1"
 rustc-serialize = "0.3"
+hyper = "0.9"
 
 [[bin]]
 name = "github-issues"
 test = true
 doc = false
 
-# [lib]
-# name = nerve
+[lib]
+name = "nerve"
+path = "src/nerve/lib.rs"
