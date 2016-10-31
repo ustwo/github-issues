@@ -18,26 +18,33 @@ pub struct NewIssue {
 pub fn run(repopath: String,
            oauth_token: String,
            filename: String) {
-    let mut records = csv::Reader::from_file(filename).unwrap();
 
-    for record in records.decode() {
-        let (title, body, labels, assignees): (String, Option<String>, Option<String>, Option<String>) =
-            record.unwrap();
+    let issues: Issues = from_file(filename);
 
-        let rec = NewIssue { assignees : assignees.map(split)
-                           , body : body
-                           , labels : labels.map(split)
-                           , title : title
-                           };
-
-        println!("{:?}", rec);
-    }
-
-    println!("foo");
+    println!("{:?}", issues);
 }
 
 
 // CSV lib does not cast Vec<String> so this is a workaround.
 fn split(s: String) -> Vec<String> {
    s.split(",").map(From::from).collect()
+}
+
+
+fn from_file(filename: String) -> Issues {
+    let mut records = csv::Reader::from_file(filename).unwrap();
+    let mut issues: Issues = vec![];
+
+    for record in records.decode() {
+        let (title, body, labels, assignees): (String, Option<String>, Option<String>, Option<String>) =
+            record.unwrap();
+
+        issues.push(NewIssue { assignees : assignees.map(split)
+                             , body : body
+                             , labels : labels.map(split)
+                             , title : title
+                             });
+    }
+
+    issues
 }
