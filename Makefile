@@ -13,8 +13,18 @@ debug:
 .PHONY: debug
 
 fetch:
-	./target/debug/github-issues fetch arnau/test --oauth-token $GITHUB_TOKEN --output test.csv --format csv
+	./target/debug/github-issues fetch arnau/test \
+      --oauth-token $(GITHUB_TOKEN) \
+      --output test.csv \
+      --format csv
 .PHONY: fetch
+
+upload:
+	./target/debug/github-issues upload arnau/test \
+      --oauth-token $(GITHUB_TOKEN) \
+      --input ./test1.csv
+.PHONY: upload
+
 
 build:
 	@cargo build --release
