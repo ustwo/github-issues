@@ -2,9 +2,19 @@ repo_name := github-issues
 version := v$(shell cat Cargo.toml | grep version | cut -d '"' -f2)
 artifact_osx = $(repo_name)-$(version)-osx-amd64.tar.gz
 
+OPENSSL_INCLUDE_DIR=/usr/local/opt/openssl/include
+
 test:
 	@cargo test
 .PHONY: test
+
+debug:
+	OPENSSL_INCLUDE_DIR=$(OPENSSL_INCLUDE_DIR) cargo build
+.PHONY: debug
+
+fetch:
+	./target/debug/github-issues fetch arnau/test --oauth-token $GITHUB_TOKEN --output test.csv --format csv
+.PHONY: fetch
 
 build:
 	@cargo build --release
