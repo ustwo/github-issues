@@ -21,13 +21,23 @@ pub fn run(repopath: String,
 
 
     for new_issue in issues {
-        let res = issues::create(&url, &oauth_token, new_issue);
-        let issue: Issue = as_issue(&res.content).unwrap();
+        let res = issues::create(&url, &oauth_token, &new_issue);
 
-        println!("{} {} {} {}", say::info(), "Created issue number",
-                 issue.number,
-                 issue.title.unwrap_or("missing title".to_string()));
+        match res {
+            Ok(r) => {
+                let issue: Issue = as_issue(&r.content).unwrap();
 
+                println!("{} {} {} {}", say::info(), "Created issue number",
+                         issue.number,
+                         issue.title.unwrap_or("missing title".to_string()));
+            }
+
+            Err(e) => {
+                println!("{} {} {} {} {}", say::error(),
+                         "Couldn't create an issue for", new_issue.title,
+                         "because", e);
+            }
+        }
     }
 }
 
@@ -53,13 +63,14 @@ fn from_file(filename: String) -> Issues {
     let mut issues: Issues = vec![];
 
     for record in records.decode() {
-        let (title, body, labels, assignees): (String, String, String, String) =
-            record.unwrap();
+        let (title, body, labels, assignees, milestone):
+            (String, String, String, String, Option<u32>) = record.unwrap();
 
         issues.push(NewIssue { assignees : split(assignees)
                              , body : body
                              , labels : split(labels)
                              , title : title
+                             , milestone : milestone
                              });
     }
 
