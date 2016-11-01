@@ -20,7 +20,7 @@ We will review the changes as soon as possible.
 ## Requirements
 
 * [Fork the project](http://github.com/ustwo/github-issues/fork) and clone.
-* Rust +1.7
+* Rust +1.12
 
 
 ## Install
@@ -29,7 +29,14 @@ This project uses `cargo` to manage dependencies so making a build will fetch
 anything required.
 
 ```sh
-$ make build
+cargo build
+```
+
+If you are on Mac OSX you should probably use a custom `OPENSSL_INCLUDE_DIR`.
+For example, mine is installed in `/usr/local/opt/openssl/include`.
+
+```sh
+OPENSSL_INCLUDE_DIR=/usr/local/openssl/include cargo build
 ```
 
 
@@ -43,5 +50,5 @@ git checkout -b features/feature-name
 ## Test
 
 ```sh
-$ make test
+cargo test
 ```
