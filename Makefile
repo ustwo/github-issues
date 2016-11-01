@@ -28,7 +28,7 @@ upload:
 
 build:
 	@cargo build --release
-.PHONY: artifact
+.PHONY: build
 
 release: release-create release-artifacts
 .PHONY: release

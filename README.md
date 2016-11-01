@@ -84,7 +84,7 @@ Check our [contributing guidelines](./CONTRIBUTING.md)
 
 ## Maintainers
 
-* [Arnau Siches](mailto:arnau@ustwo.com)
+* [Arnau Siches](mailto:arnau@ustwo.com) (@arnau)
 
 
 ## Contact
