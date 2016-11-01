@@ -41,10 +41,7 @@ impl Page {
 
 impl fmt::Display for Page {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{");
-        write!(f, "next: {:?},", self.next);
-        write!(f, "ratelimit: {}", self.ratelimit);
-        write!(f, "}}")
+        write!(f, "{{next: {:?}, ratelimit: {}}}", self.next, self.ratelimit)
     }
 }
 

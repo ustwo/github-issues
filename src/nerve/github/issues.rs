@@ -9,6 +9,7 @@ use std::process;
 
 use say;
 use github::mime;
+use github::entities::{Error};
 
 header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
 
@@ -20,12 +21,12 @@ pub struct NewIssue {
     pub body: String,
     pub labels: Vec<String>,
     pub title: String,
+    pub milestone: Option<u32>,
 }
 
-
-pub fn create(url: &str, token: &str, issue: NewIssue) -> Response {
+pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Error> {
     let client = Client::new();
-    let body = json::encode(&issue).unwrap();
+    let body = json::encode(issue).unwrap();
 
     let res = client.post(&*url.clone())
                     .body(&body)
@@ -38,13 +39,19 @@ pub fn create(url: &str, token: &str, issue: NewIssue) -> Response {
     match res.status {
         hyper::Ok => {}
         StatusCode::Created => {}
+        StatusCode::UnprocessableEntity => {
+            let body = as_response(res);
+            let err = Error::from_str(&body.content).unwrap();
+
+            return Err(err);
+        }
         e => {
             println!("{} {}", say::error(), e);
             process::exit(1)
         }
     }
 
-    as_response(res)
+    Ok(as_response(res))
 }
 
 
@@ -64,7 +71,6 @@ pub fn as_response(mut res: HyperResponse) -> Response {
              , ratelimit: ratelimit(&res.headers)
              }
 }
-
 
 
 pub fn warn_ratelimit(ratelimit: u32) {
