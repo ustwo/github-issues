@@ -3,16 +3,11 @@
 //! It uploads issues from a CSV.
 
 use csv;
+use rustc_serialize::json;
 
-pub type Issues = Vec<NewIssue>;
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub struct NewIssue {
-    pub assignees: Option<Vec<String>>,
-    pub body: Option<String>,
-    pub labels: Option<Vec<String>>,
-    pub title: String,
-}
+use say;
+use github::issues::{self, Issues, NewIssue};
+use github::entities::{Issue};
 
 
 pub fn run(repopath: String,
@@ -21,13 +16,35 @@ pub fn run(repopath: String,
 
     let issues: Issues = from_file(filename);
 
-    println!("{:?}", issues);
+    let url = format!("https://api.github.com/repos/{repopath}/issues",
+                      repopath = repopath);
+
+
+    for new_issue in issues {
+        let res = issues::create(&url, &oauth_token, new_issue);
+        let issue: Issue = as_issue(&res.content).unwrap();
+
+        println!("{} {} {} {}", say::info(), "Created issue number",
+                 issue.number,
+                 issue.title.unwrap_or("missing title".to_string()));
+
+    }
 }
+
+
+fn as_issue(data: &str) -> Result<Issue, json::DecoderError> {
+    json::decode(data)
+}
+
 
 
 // CSV lib does not cast Vec<String> so this is a workaround.
 fn split(s: String) -> Vec<String> {
-   s.split(",").map(From::from).collect()
+    if s.is_empty() {
+        vec![]
+    } else {
+        s.split(",").map(From::from).collect()
+    }
 }
 
 
@@ -36,12 +53,12 @@ fn from_file(filename: String) -> Issues {
     let mut issues: Issues = vec![];
 
     for record in records.decode() {
-        let (title, body, labels, assignees): (String, Option<String>, Option<String>, Option<String>) =
+        let (title, body, labels, assignees): (String, String, String, String) =
             record.unwrap();
 
-        issues.push(NewIssue { assignees : assignees.map(split)
+        issues.push(NewIssue { assignees : split(assignees)
                              , body : body
-                             , labels : labels.map(split)
+                             , labels : split(labels)
                              , title : title
                              });
     }
