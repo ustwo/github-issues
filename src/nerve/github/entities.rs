@@ -1,4 +1,6 @@
 // Github entities represented as structs.
+use std::fmt;
+use rustc_serialize::json;
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 pub struct Issue {
@@ -27,8 +29,38 @@ pub struct User {
     pub login: String,
 }
 
+
 #[derive(Debug, RustcDecodable, RustcEncodable)]
-pub struct GithubError {
+pub struct Error {
     pub message: String,
-    pub documentation_url: String,
+    pub errors: Vec<ErrorResource>,
+}
+
+impl Error {
+    pub fn from_str(data: &str) -> Result<Error, json::DecoderError> {
+        json::decode(data)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let error = self.errors.first().unwrap();
+
+        write!(f, "the field '{}' {}", error.field, "has an invalid value.")
+    }
+}
+
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+pub struct ErrorResource {
+    pub code: String,
+    pub resource: String,
+    pub field: String,
+}
+
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+pub enum ErrorName {
+    Invalid,
+    Missing,
+    MissingField,
+    AlreadyExists,
 }

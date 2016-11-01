@@ -1,4 +1,3 @@
-use std::fmt;
 use hyper::Client;
 use hyper::status::StatusCode;
 use hyper::client::Response as HyperResponse;
@@ -10,6 +9,7 @@ use std::process;
 
 use say;
 use github::mime;
+use github::entities::{Error};
 
 header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
 
@@ -24,42 +24,7 @@ pub struct NewIssue {
     pub milestone: Option<u32>,
 }
 
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub struct RemoteError {
-    pub message: String,
-    pub errors: Vec<ErrorResource>,
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub enum ErrorName {
-    Invalid,
-    Missing,
-    MissingField,
-    AlreadyExists,
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub struct ErrorResource {
-    pub code: String,
-    pub resource: String,
-    pub field: String,
-}
-
-impl fmt::Display for RemoteError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let error = self.errors.first().unwrap();
-
-        write!(f, "the field '{}' {}", error.field, "has an invalid value.")
-    }
-}
-
-
-fn as_remote_error(data: &str) -> Result<RemoteError, json::DecoderError> {
-    json::decode(data)
-}
-
-
-pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, RemoteError> {
+pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Error> {
     let client = Client::new();
     let body = json::encode(issue).unwrap();
 
@@ -76,7 +41,7 @@ pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Remo
         StatusCode::Created => {}
         StatusCode::UnprocessableEntity => {
             let body = as_response(res);
-            let err = as_remote_error(&body.content).unwrap();
+            let err = Error::from_str(&body.content).unwrap();
 
             return Err(err);
         }
@@ -106,7 +71,6 @@ pub fn as_response(mut res: HyperResponse) -> Response {
              , ratelimit: ratelimit(&res.headers)
              }
 }
-
 
 
 pub fn warn_ratelimit(ratelimit: u32) {
