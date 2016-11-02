@@ -134,6 +134,7 @@ impl ResponseError {
 
 impl fmt::Display for ResponseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: Check situations with multiple errors.
         let error = self.errors.first().unwrap();
 
         write!(f, "the field '{}' {}", error.field, "has an invalid value.")
@@ -142,13 +143,13 @@ impl fmt::Display for ResponseError {
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 pub struct ErrorResource {
-    pub code: String,
+    pub code: ErrorCode,
     pub resource: String,
     pub field: String,
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
-pub enum ErrorName {
+pub enum ErrorCode {
     Invalid,
     Missing,
     MissingField,
