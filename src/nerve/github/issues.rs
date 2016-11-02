@@ -1,18 +1,16 @@
 use hyper::Client;
 use hyper::status::StatusCode;
-use hyper::client::Response as HyperResponse;
-use hyper::header::{Headers, Accept, Authorization, Connection, UserAgent, qitem};
+use hyper::header::{ Accept, Authorization, Connection, UserAgent, qitem };
 use hyper;
 use rustc_serialize::json;
-use std::io::Read;
 use std::process;
 
 use say;
 use github::mime;
-use github::entities::{Error, NewIssue};
-use github::response::{XRateLimitRemaining};
+use github::entities::{ NewIssue };
+use github::response::{ Response, ResponseError };
 
-pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Error> {
+pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, ResponseError> {
     let client = Client::new();
     let body = json::encode(issue).unwrap();
 
@@ -28,8 +26,8 @@ pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Erro
         hyper::Ok => {}
         StatusCode::Created => {}
         StatusCode::UnprocessableEntity => {
-            let body = as_response(res);
-            let err = Error::from_str(&body.content).unwrap();
+            let body: Response = From::from(res);
+            let err = ResponseError::from_str(&body.content).unwrap();
 
             return Err(err);
         }
@@ -39,35 +37,5 @@ pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Erro
         }
     }
 
-    Ok(as_response(res))
-}
-
-
-/// The result of processing a response.
-#[derive(Debug)]
-pub struct Response {
-    pub content: String,
-    pub ratelimit: u32,
-}
-
-
-pub fn as_response(mut res: HyperResponse) -> Response {
-    let mut body = String::new();
-    res.read_to_string(&mut body).unwrap();
-
-    Response { content: body
-             , ratelimit: ratelimit(&res.headers)
-             }
-}
-
-
-pub fn warn_ratelimit(ratelimit: u32) {
-    println!("{} {} {}", say::warn(), ratelimit, "Remaining requests");
-}
-
-pub fn ratelimit(headers: &Headers) -> u32 {
-    match headers.get() {
-        Some(&XRateLimitRemaining(x)) => x,
-        None => 0
-    }
+    Ok(From::from(res))
 }
