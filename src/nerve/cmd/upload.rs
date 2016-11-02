@@ -1,10 +1,10 @@
 //! Upload command
 //!
 //! It uploads issues from a CSV.
-
 use csv;
 
 use say;
+use format::{split};
 use github::issues;
 use github::entities::{Issue, NewIssues, NewIssue};
 
@@ -37,16 +37,6 @@ pub fn run(repopath: String,
                          "because", e);
             }
         }
-    }
-}
-
-
-// CSV lib does not cast Vec<String> so this is a workaround.
-fn split(s: String) -> Vec<String> {
-    if s.is_empty() {
-        vec![]
-    } else {
-        s.split(",").map(From::from).collect()
     }
 }
 
