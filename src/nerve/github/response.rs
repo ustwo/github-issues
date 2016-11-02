@@ -16,7 +16,8 @@ header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
 header! { (Link, "Link") => [String] }
 
 /// The result of processing a response.
-/// TODO: Unify with Page
+/// TODO: Unify with Page. To do so, Link needs to be treated as an Option
+/// all the way.
 #[derive(Debug)]
 pub struct Response {
     pub content: String,
