@@ -3,18 +3,17 @@
 //! It uploads issues from a CSV.
 
 use csv;
-use rustc_serialize::json;
 
 use say;
-use github::issues::{self, Issues, NewIssue};
-use github::entities::{Issue};
+use github::issues;
+use github::entities::{Issue, NewIssues, NewIssue};
 
 
 pub fn run(repopath: String,
            oauth_token: String,
            filename: String) {
 
-    let issues: Issues = from_file(filename);
+    let issues: NewIssues = from_file(filename);
 
     let url = format!("https://api.github.com/repos/{repopath}/issues",
                       repopath = repopath);
@@ -25,7 +24,7 @@ pub fn run(repopath: String,
 
         match res {
             Ok(r) => {
-                let issue: Issue = as_issue(&r.content).unwrap();
+                let issue = Issue::from_str(&r.content).unwrap();
 
                 println!("{} {} {} {}", say::info(), "Created issue number",
                          issue.number,
@@ -42,12 +41,6 @@ pub fn run(repopath: String,
 }
 
 
-fn as_issue(data: &str) -> Result<Issue, json::DecoderError> {
-    json::decode(data)
-}
-
-
-
 // CSV lib does not cast Vec<String> so this is a workaround.
 fn split(s: String) -> Vec<String> {
     if s.is_empty() {
@@ -58,9 +51,9 @@ fn split(s: String) -> Vec<String> {
 }
 
 
-fn from_file(filename: String) -> Issues {
+fn from_file(filename: String) -> NewIssues {
     let mut records = csv::Reader::from_file(filename).unwrap();
-    let mut issues: Issues = vec![];
+    let mut issues: NewIssues = vec![];
 
     for record in records.decode() {
         let (title, body, labels, assignees, milestone):
