@@ -20,6 +20,22 @@ pub struct NewIssue {
     pub milestone: Option<u32>,
 }
 
+type Record = (String, String, String, String, Option<u32>);
+
+impl From<Record> for NewIssue {
+    fn from(record: Record) -> Self {
+        let (title, body, labels, assignees, milestone):
+            (String, String, String, String, Option<u32>) = record;
+
+        NewIssue { assignees : split(assignees)
+                 , body : body
+                 , labels : split(labels)
+                 , title : title
+                 , milestone : milestone
+                 }
+    }
+}
+
 // pub type NewIssues = Vec<NewIssue>;
 pub struct NewIssues(Vec<NewIssue>);
 
@@ -47,16 +63,8 @@ impl <T: io::Read>From<csv::Reader<T>> for NewIssues {
     fn from(mut records: csv::Reader<T>) -> Self {
         let mut issues: NewIssues = NewIssues::new();
 
-        for record in records.decode() {
-            let (title, body, labels, assignees, milestone):
-                (String, String, String, String, Option<u32>) = record.unwrap();
-
-            issues.push(NewIssue { assignees : split(assignees)
-                                 , body : body
-                                 , labels : split(labels)
-                                 , title : title
-                                 , milestone : milestone
-                                 });
+        for record in records.decode::<Record>() {
+            issues.push(NewIssue::from(record.unwrap()));
         }
 
         issues
