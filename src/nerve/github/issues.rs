@@ -9,20 +9,8 @@ use std::process;
 
 use say;
 use github::mime;
-use github::entities::{Error};
-
-header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
-
-pub type Issues = Vec<NewIssue>;
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub struct NewIssue {
-    pub assignees: Vec<String>,
-    pub body: String,
-    pub labels: Vec<String>,
-    pub title: String,
-    pub milestone: Option<u32>,
-}
+use github::entities::{Error, NewIssue};
+use github::response::{XRateLimitRemaining};
 
 pub fn create(url: &str, token: &str, issue: &NewIssue) -> Result<Response, Error> {
     let client = Client::new();
