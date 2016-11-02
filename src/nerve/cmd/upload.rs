@@ -4,16 +4,16 @@
 use csv;
 
 use say;
-use format::{split};
 use github::issues;
-use github::entities::{Issue, NewIssues, NewIssue};
+use github::entities::{Issue, NewIssues};
 
 
 pub fn run(repopath: String,
            oauth_token: String,
            filename: String) {
 
-    let issues: NewIssues = from_file(filename);
+    let records = csv::Reader::from_file(filename).unwrap();
+    let issues: NewIssues = NewIssues::from(records);
 
     let url = format!("https://api.github.com/repos/{repopath}/issues",
                       repopath = repopath);
@@ -38,24 +38,4 @@ pub fn run(repopath: String,
             }
         }
     }
-}
-
-
-fn from_file(filename: String) -> NewIssues {
-    let mut records = csv::Reader::from_file(filename).unwrap();
-    let mut issues: NewIssues = vec![];
-
-    for record in records.decode() {
-        let (title, body, labels, assignees, milestone):
-            (String, String, String, String, Option<u32>) = record.unwrap();
-
-        issues.push(NewIssue { assignees : split(assignees)
-                             , body : body
-                             , labels : split(labels)
-                             , title : title
-                             , milestone : milestone
-                             });
-    }
-
-    issues
 }
