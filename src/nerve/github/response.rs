@@ -1,10 +1,11 @@
 use std::fmt;
 use hyper;
 use hyper::Client;
-use hyper::client::Response;
+use hyper::client::Response as HyperResponse;
 use hyper::header::{Headers, Accept, Authorization, Connection, UserAgent, qitem};
 use regex::Regex;
-use std::io::prelude::*;
+use rustc_serialize::json;
+use std::io::Read;
 use std::process;
 
 use say;
@@ -15,11 +16,32 @@ header! { (XRateLimitRemaining, "X-RateLimit-Remaining") => [u32] }
 header! { (Link, "Link") => [String] }
 
 /// The result of processing a response.
+/// TODO: Unify with Page
+#[derive(Debug)]
+pub struct Response {
+    pub content: String,
+    pub ratelimit: u32,
+}
+
+impl From<HyperResponse> for Response {
+    fn from(mut res: HyperResponse) -> Self {
+        let mut body = String::new();
+        res.read_to_string(&mut body).unwrap();
+
+        Response { content: body
+                 , ratelimit: ratelimit(&res.headers)
+                 }
+    }
+}
+
+
+/// The result of processing a response.
 pub struct Page {
     pub content: String,
     pub next: Option<String>,
     pub ratelimit: u32,
 }
+
 
 impl Page {
     pub fn new(url: &str, token: &str) -> Page {
@@ -45,7 +67,7 @@ impl fmt::Display for Page {
     }
 }
 
-fn get_page(url: String, token: &str) -> Response {
+fn get_page(url: String, token: &str) -> HyperResponse {
     println!("{} {} {}", say::info(), "Fetching", url);
 
     let client = Client::new();
@@ -74,6 +96,11 @@ pub fn ratelimit(headers: &Headers) -> u32 {
     }
 }
 
+pub fn warn_ratelimit(ratelimit: u32) {
+    println!("{} {} {}", say::warn(), ratelimit, "Remaining requests");
+}
+
+
 // A Link header is not present if the requested collection has less than
 // _pagesize_.
 pub fn link(headers: &Headers) -> String {
@@ -89,4 +116,41 @@ fn next_url(link: String) -> Option<String> {
         None => None,
         Some(cs) => cs.at(1).as_ref().map(|x| x.to_string())
     }
+}
+
+
+/// A response error.
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+pub struct ResponseError {
+    pub message: String,
+    pub errors: Vec<ErrorResource>,
+}
+
+impl ResponseError {
+    pub fn from_str(data: &str) -> Result<ResponseError, json::DecoderError> {
+        json::decode(data)
+    }
+}
+
+impl fmt::Display for ResponseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let error = self.errors.first().unwrap();
+
+        write!(f, "the field '{}' {}", error.field, "has an invalid value.")
+    }
+}
+
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+pub struct ErrorResource {
+    pub code: String,
+    pub resource: String,
+    pub field: String,
+}
+
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+pub enum ErrorName {
+    Invalid,
+    Missing,
+    MissingField,
+    AlreadyExists,
 }
