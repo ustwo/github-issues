@@ -1,5 +1,9 @@
 // Github entities represented as structs.
+use std::io;
+use csv;
 use rustc_serialize::json;
+
+use format::split;
 
 /// An Issue-to-be. It doesn't have number, state or any timestamp because
 /// it is not yet created.
@@ -16,7 +20,48 @@ pub struct NewIssue {
     pub milestone: Option<u32>,
 }
 
-pub type NewIssues = Vec<NewIssue>;
+// pub type NewIssues = Vec<NewIssue>;
+pub struct NewIssues(Vec<NewIssue>);
+
+
+impl NewIssues {
+    fn new() -> Self {
+        NewIssues(Vec::new())
+    }
+
+    fn push(&mut self, elem: NewIssue) {
+        self.0.push(elem);
+    }
+}
+
+impl IntoIterator for NewIssues {
+    type Item = NewIssue;
+    type IntoIter = ::std::vec::IntoIter<NewIssue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl <T: io::Read>From<csv::Reader<T>> for NewIssues {
+    fn from(mut records: csv::Reader<T>) -> Self {
+        let mut issues: NewIssues = NewIssues::new();
+
+        for record in records.decode() {
+            let (title, body, labels, assignees, milestone):
+                (String, String, String, String, Option<u32>) = record.unwrap();
+
+            issues.push(NewIssue { assignees : split(assignees)
+                                 , body : body
+                                 , labels : split(labels)
+                                 , title : title
+                                 , milestone : milestone
+                                 });
+        }
+
+        issues
+    }
+}
 
 
 /// A partial representation of a Github Issue. The represented fields are the
