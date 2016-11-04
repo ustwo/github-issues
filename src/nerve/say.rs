@@ -16,6 +16,15 @@ pub fn highlight(text: &str) -> String {
     White.bold().paint(text).to_string()
 }
 
+pub fn yellow(text: &str) -> String {
+    Yellow.paint(text).to_string()
+}
+
+pub fn red(text: &str) -> String {
+    Red.bold().paint(text).to_string()
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
