@@ -25,6 +25,13 @@ upload:
       --input ./test1.csv
 .PHONY: upload
 
+check:
+	./target/debug/github-issues check arnau/test \
+      --oauth-token $(GITHUB_TOKEN) \
+      --input ./test1.csv
+.PHONY: check
+
+
 
 build:
 	@cargo build --release

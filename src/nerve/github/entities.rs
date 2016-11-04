@@ -2,6 +2,9 @@
 use std::io;
 use csv;
 use rustc_serialize::json;
+use rustc_serialize::Decodable;
+use rustc_serialize::Decoder;
+use rustc_serialize::DecoderHelpers;
 
 use format::split;
 
@@ -36,7 +39,6 @@ impl From<Record> for NewIssue {
     }
 }
 
-// pub type NewIssues = Vec<NewIssue>;
 pub struct NewIssues(Vec<NewIssue>);
 
 
@@ -78,11 +80,13 @@ impl <T: io::Read>From<csv::Reader<T>> for NewIssues {
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 pub struct Issue {
     pub assignee: Option<User>,
+    // pub assignees: Vec<User>,
     pub body: Option<String>,
     pub created_at: Option<String>,
     pub closed_at: Option<String>,
     pub labels: Labels,
     pub number: u32,
+    // pub id: u32,
     pub state: Option<String>,
     pub title: Option<String>,
     pub user: Option<User>,
@@ -96,6 +100,11 @@ impl Issue {
 
 
 pub type Issues = Vec<Issue>;
+
+pub fn issues_from_json(data: &str) -> Result<Issues, json::DecoderError> {
+    json::decode(data)
+}
+
 
 pub type Labels = Vec<Label>;
 
