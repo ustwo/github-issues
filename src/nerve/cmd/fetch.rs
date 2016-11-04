@@ -7,17 +7,12 @@ use csv;
 use rustc_serialize::json;
 use std::fs::File;
 use std::io::prelude::*;
-use std::result::Result;
 
 use say;
-use format::{OutputFormat};
-use github::entities::{Issues};
-use github::response::{Page};
+use format::OutputFormat;
+use github::entities::{Issues, issues_from_json};
+use github::response::Page;
 
-
-fn as_issues(data: &str) -> Result<Issues, json::DecoderError> {
-    json::decode(data)
-}
 
 pub fn run(repopath: String,
            oauth_token: String,
@@ -34,14 +29,14 @@ pub fn run(repopath: String,
                       labels_pair = labels_pair);
 
     let page = Page::new(&url, &oauth_token);
-    let mut issues = as_issues(&page.content).unwrap();
+    let mut issues = issues_from_json(&page.content).unwrap();
     let mut next_url = page.next.clone();
 
     page.warn();
 
     while let Some(url) = next_url {
         let page = Page::new(&url, &oauth_token);
-        issues.extend(as_issues(&page.content).unwrap());
+        issues.extend(issues_from_json(&page.content).unwrap());
         next_url = page.next.clone();
 
         page.warn();

@@ -144,15 +144,7 @@ impl fmt::Display for ResponseError {
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 pub struct ErrorResource {
-    pub code: ErrorCode,
+    pub code: String,
     pub resource: String,
     pub field: String,
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-pub enum ErrorCode {
-    Invalid,
-    Missing,
-    MissingField,
-    AlreadyExists,
 }
