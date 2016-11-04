@@ -11,6 +11,7 @@ use github::entities::{Issue, Issues, NewIssues, issues_from_json};
 use github::response::Page;
 
 pub fn run(repopath: String, oauth_token: String, filename: String) {
+    let href = format!("https://github.com/{}/issues/", repopath);
     let existing_issues = fetch_open_issues(&repopath, &oauth_token);
     let title_list = extract_titles(existing_issues);
 
@@ -18,10 +19,16 @@ pub fn run(repopath: String, oauth_token: String, filename: String) {
     let issues: NewIssues = NewIssues::from(records);
 
 
-    for new_issue in issues {
+    for (i, new_issue) in issues.into_iter().enumerate() {
         let similars = filter_by_similar(&new_issue.title, &title_list, 0.6);
 
-        println!("{}: {:?}", new_issue.title, similars);
+        if !similars.is_empty() {
+            println!("#{} {}", i, say::highlight(&new_issue.title));
+
+            for (num, title) in similars {
+                println!("    {}{} {}", href, say::red(&num.to_string()), say::yellow(&title));
+            }
+        }
 
     }
 }
@@ -51,8 +58,6 @@ fn fetch_open_issues(repopath: &str, oauth_token: &str) -> Issues {
 
         page.warn();
     }
-
-    println!("{} {}", say::highlight("Total issues collected:"), issues.len());
 
     issues
 }
