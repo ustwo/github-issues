@@ -2,9 +2,6 @@
 use std::io;
 use csv;
 use rustc_serialize::json;
-use rustc_serialize::Decodable;
-use rustc_serialize::Decoder;
-use rustc_serialize::DecoderHelpers;
 
 use format::split;
 
