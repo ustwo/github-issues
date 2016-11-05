@@ -6,8 +6,7 @@ use csv;
 
 use say;
 use checker::filter_by_similar;
-use github::issues;
-use github::entities::{Issue, Issues, NewIssues, issues_from_json};
+use github::entities::{Issues, NewIssues, issues_from_json};
 use github::response::Page;
 
 pub fn run(repopath: String, oauth_token: String, filename: String) {
