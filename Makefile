@@ -21,6 +21,7 @@ fetch:
 
 upload:
 	./target/debug/github-issues upload arnau/test \
+      --check \
       --oauth-token $(GITHUB_TOKEN) \
       --input ./test1.csv
 .PHONY: upload

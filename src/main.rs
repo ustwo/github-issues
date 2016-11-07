@@ -17,23 +17,6 @@ fn main() {
                       .version(env!("CARGO_PKG_VERSION"))
                       .author("Arnau Siches <arnau@ustwo.com>")
                       .about("Github issues consumer.")
-                      .subcommand(SubCommand::with_name("check")
-                                             .about("Check for duplicates in Github for a given CSV")
-                                             .arg(Arg::with_name("repopath")
-                                                      .help("Repo path (e.g. ustwo/mastermind)")
-                                                      .index(1)
-                                                      .validator(is_repopath)
-                                                      .required(true))
-                                             .arg(Arg::with_name("oauth-token")
-                                                      .help("Github OAuth authorisation token")
-                                                      .long("oauth-token")
-                                                      .value_name("oauth_token")
-                                                      .required(true))
-                                             .arg(Arg::with_name("input")
-                                                      .help("Read input from <file>")
-                                                      .long("input")
-                                                      .value_name("file")
-                                                      .required(true)))
                       .subcommand(SubCommand::with_name("upload")
                                              .about("Upload issues from a CSV file")
                                              .about("Check for duplicates in Github for a given CSV")
@@ -51,7 +34,10 @@ fn main() {
                                                       .help("Read input from <file>")
                                                       .long("input")
                                                       .value_name("file")
-                                                      .required(true)))
+                                                      .required(true))
+                                             .arg(Arg::with_name("check")
+                                                      .help("Check if any records in the provided CSV have potential collisions in existing Issues. This flag makes the command noop.")
+                                                      .long("check")))
                       .subcommand(SubCommand::with_name("fetch")
                                              .about("Fetch issues from Github.")
                                              .arg(Arg::with_name("repopath")
@@ -109,21 +95,15 @@ fn main() {
         let oauth_token = matches.value_of("oauth-token").unwrap().to_owned();
         let input_file = matches.value_of("input").unwrap().to_owned();
 
-        cmd::upload::run(repopath,
-                         oauth_token,
-                         input_file);
+        if matches.is_present("check") {
+            cmd::check::run(repopath,
+                            oauth_token,
+                            input_file);
+        } else {
+            cmd::upload::run(repopath,
+                             oauth_token,
+                             input_file);
+        }
     }
-
-
-    if let Some(ref matches) = matches.subcommand_matches("check") {
-        let repopath = matches.value_of("repopath").unwrap().to_owned();
-        let oauth_token = matches.value_of("oauth-token").unwrap().to_owned();
-        let input_file = matches.value_of("input").unwrap().to_owned();
-
-        cmd::check::run(repopath,
-                        oauth_token,
-                        input_file);
-    }
-
 
 }
