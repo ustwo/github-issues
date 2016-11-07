@@ -65,6 +65,19 @@ Error: Couldn't create an issue for 'Foo bar' because the field 'milestone' has 
 ```
 
 
+## Check for duplicates
+
+If you want to check if any record in the CSV you are about to upload is a
+possible duplicate to an existing issue you can pass the flag `--check` to
+the `upload` command. This flag makes the command noop so even if there are
+no duplicates detected you'll have to run the `upload` command without the
+flag in order to create new issues.
+
+The current duplicate detection is quite naive. It only checks if the title
+of the issue is similar to another one. So short names have more chances to
+be false positives.
+
+
 ## Install
 
 The preferred way to install `github-issues` is via Hombrew:
