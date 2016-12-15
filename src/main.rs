@@ -13,13 +13,24 @@ use nerve::validators::{is_repopath};
 fn main() {
     env_logger::init().unwrap();
 
+    let upload_about = "Upload issues from a CSV file. If the first line is
+detected to be a header it will be ignored. The fields are identified and
+consumed in order:
+
+1. `title`
+2. `body`
+3. `labels`
+4. `assignees`
+5. `milestone_id`";
+
     let matches = App::new("github-issues")
                       .version(env!("CARGO_PKG_VERSION"))
                       .author("Arnau Siches <arnau@ustwo.com>")
                       .about("Github issues consumer.")
+                      .subcommand(SubCommand::with_name("upload-template")
+                                             .about("Generates a CSV example as an easy start for the upload command."))
                       .subcommand(SubCommand::with_name("upload")
-                                             .about("Upload issues from a CSV file")
-                                             .about("Check for duplicates in Github for a given CSV")
+                                             .about(upload_about)
                                              .arg(Arg::with_name("repopath")
                                                       .help("Repo path (e.g. ustwo/mastermind)")
                                                       .index(1)
@@ -89,6 +100,11 @@ fn main() {
                         output);
     }
 
+
+    if let Some(_) = matches.subcommand_matches("upload-template") {
+        println!(r#"title,body,labels,assignees,milestone_id
+"A nice title","A descriptive body","in_backlog,feature",arnau,1"#);
+    }
 
     if let Some(ref matches) = matches.subcommand_matches("upload") {
         let repopath = matches.value_of("repopath").unwrap().to_owned();
