@@ -46,7 +46,18 @@ possible is:
 
 ```csv
 A title,,,,
+Another title,,,,
 ```
+
+As you can see, the header line is optional. The fields are identified and
+consumed in order:
+
+1. `title`
+2. `body`
+3. `labels`
+4. `assignees`
+5. `milestone_id`
+
 
 Note: Github allows you to create labels by just setting them in a new Issue
 but it will fail if you reference a non-existing milestone id.
