@@ -28,7 +28,11 @@ consumed in order:
                       .author("Arnau Siches <arnau@ustwo.com>")
                       .about("Github issues consumer.")
                       .subcommand(SubCommand::with_name("upload-template")
-                                             .about("Generates a CSV example as an easy start for the upload command."))
+                                             .about("Generates a CSV example as an easy start for the upload command.")
+                                             .arg(Arg::with_name("output")
+                                                      .help("Write output to <file>")
+                                                      .long("output")
+                                                      .value_name("file")))
                       .subcommand(SubCommand::with_name("upload")
                                              .about(upload_about)
                                              .arg(Arg::with_name("repopath")
@@ -101,10 +105,10 @@ consumed in order:
     }
 
 
-    if let Some(_) = matches.subcommand_matches("upload-template") {
-        println!(r#"title,body,labels,assignees,milestone_id
-"A nice title","A descriptive body","in_backlog,feature",arnau,1"#);
+    if let Some(ref matches) = matches.subcommand_matches("upload-template") {
+        cmd::template::run(matches.value_of("output"));
     }
+
 
     if let Some(ref matches) = matches.subcommand_matches("upload") {
         let repopath = matches.value_of("repopath").unwrap().to_owned();
