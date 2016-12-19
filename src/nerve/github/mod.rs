@@ -2,6 +2,7 @@ use hyper::mime;
 
 pub mod entities;
 pub mod response;
+pub mod issues;
 
 
 /// Hyper Mime for application/vnd.github.v3+json

@@ -13,10 +13,46 @@ use nerve::validators::{is_repopath};
 fn main() {
     env_logger::init().unwrap();
 
+    let upload_about = "Upload issues from a CSV file. If the first line is
+detected to be a header it will be ignored. The fields are identified and
+consumed in order:
+
+1. `title`
+2. `body`
+3. `labels`
+4. `assignees`
+5. `milestone_id`";
+
     let matches = App::new("github-issues")
                       .version(env!("CARGO_PKG_VERSION"))
                       .author("Arnau Siches <arnau@ustwo.com>")
                       .about("Github issues consumer.")
+                      .subcommand(SubCommand::with_name("upload-template")
+                                             .about("Generates a CSV example as an easy start for the upload command.")
+                                             .arg(Arg::with_name("output")
+                                                      .help("Write output to <file>")
+                                                      .long("output")
+                                                      .value_name("file")))
+                      .subcommand(SubCommand::with_name("upload")
+                                             .about(upload_about)
+                                             .arg(Arg::with_name("repopath")
+                                                      .help("Repo path (e.g. ustwo/mastermind)")
+                                                      .index(1)
+                                                      .validator(is_repopath)
+                                                      .required(true))
+                                             .arg(Arg::with_name("oauth-token")
+                                                      .help("Github OAuth authorisation token")
+                                                      .long("oauth-token")
+                                                      .value_name("oauth_token")
+                                                      .required(true))
+                                             .arg(Arg::with_name("input")
+                                                      .help("Read input from <file>")
+                                                      .long("input")
+                                                      .value_name("file")
+                                                      .required(true))
+                                             .arg(Arg::with_name("check")
+                                                      .help("Check if any records in the provided CSV have potential collisions in existing Issues. This flag makes the command noop.")
+                                                      .long("check")))
                       .subcommand(SubCommand::with_name("fetch")
                                              .about("Fetch issues from Github.")
                                              .arg(Arg::with_name("repopath")
@@ -67,4 +103,27 @@ fn main() {
                         format,
                         output);
     }
+
+
+    if let Some(ref matches) = matches.subcommand_matches("upload-template") {
+        cmd::template::run(matches.value_of("output"));
+    }
+
+
+    if let Some(ref matches) = matches.subcommand_matches("upload") {
+        let repopath = matches.value_of("repopath").unwrap().to_owned();
+        let oauth_token = matches.value_of("oauth-token").unwrap().to_owned();
+        let input_file = matches.value_of("input").unwrap().to_owned();
+
+        if matches.is_present("check") {
+            cmd::check::run(repopath,
+                            oauth_token,
+                            input_file);
+        } else {
+            cmd::upload::run(repopath,
+                             oauth_token,
+                             input_file);
+        }
+    }
+
 }
