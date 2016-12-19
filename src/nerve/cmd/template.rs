@@ -2,15 +2,8 @@
 //!
 //! It returns a dummy CSV
 
-use csv;
-use rustc_serialize::json;
 use std::fs::File;
 use std::io::prelude::*;
-
-use say;
-use format::OutputFormat;
-use github::entities::{Issues, issues_from_json};
-use github::response::Page;
 
 
 pub fn run(output: Option<&str>) {
