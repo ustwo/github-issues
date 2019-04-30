@@ -1,5 +1,7 @@
 # Github Issues CLI
 
+⚠️ No longer maintained ⚠️
+
 The current version allows you to fetch or upload Github issues. `fetch` lets
 you store the retrieved issues in CSV or JSON. `upload` lets you create
 multiple issues from a CSV.
